@@ -661,3 +661,90 @@ fn a_sessions_directory_removed_is_awaited_again_and_watched_once_made_anew() {
     assert_eq!(fixture.resting(), Some(sessions));
     assert_eq!(fixture.awaited(), vec![]);
 }
+
+// Regression coverage retained from the independent d312b2f audit probes.
+
+#[test]
+fn a_stale_startup_reading_cannot_commit_rows_a_second_time() {
+    use codex_harness_nexus::Waking;
+    let fixture = Fixture::fixture(PRODUCER);
+    fixture.configure();
+    let rollout = fixture.path("sessions").join("rollout.jsonl");
+    fixture.started(Some(&rollout)).unwrap();
+    fixture.append(&rollout, TASK_STARTED);
+    fixture.performed(Operation::Discovering(FilePath(
+        rollout.to_string_lossy().into_owned(),
+    )));
+    let look = fixture.nexus.startup().unwrap();
+    fixture.append(&rollout, TASK_COMPLETE_NULL);
+    fixture.append(&rollout, TASK_STARTED);
+    let first = fixture.read(&rollout);
+    assert_eq!(first.len(), 2);
+    let before = fixture.record();
+    for operation in look {
+        assert!(fixture.nexus.perform(operation).is_err());
+    }
+    assert_eq!(fixture.record(), before, "a stale reading changes no Memory");
+}
+
+#[test]
+fn a_restarted_nexus_reads_only_the_rows_written_while_it_was_down() {
+    use codex_harness_nexus::Waking;
+    let fixture = Fixture::fixture(PRODUCER);
+    fixture.configure();
+    let rollout = fixture.path("sessions").join("rollout.jsonl");
+    fixture.started(Some(&rollout)).unwrap();
+    fixture.append(&rollout, TASK_STARTED);
+    fixture.performed(Operation::Discovering(FilePath(
+        rollout.to_string_lossy().into_owned(),
+    )));
+    let fixture = fixture.reopened();
+    fixture.append(&rollout, TASK_COMPLETE_NULL);
+    let mut changes = vec![];
+    for operation in fixture.nexus.startup().unwrap() {
+        changes.extend(fixture.performed(operation));
+    }
+    assert_eq!(
+        changes,
+        vec![transition(Event::TurnEnded, State::Flowing(Flow::Rested))]
+    );
+}
+
+#[test]
+fn a_known_row_with_a_field_of_the_wrong_type_is_malformed() {
+    let fixture = Fixture::fixture(PRODUCER);
+    fixture.configure();
+    let rollout = fixture.path("sessions").join("rollout.jsonl");
+    fixture.started(Some(&rollout)).unwrap();
+    fixture.append(&rollout, "");
+    fixture.performed(Operation::Discovering(FilePath(
+        rollout.to_string_lossy().into_owned(),
+    )));
+    fixture.append(
+        &rollout,
+        "{\"type\":\"event_msg\",\"payload\":{\"type\":\"token_count\",\"info\":{\"last_token_usage\":{\"input_tokens\":\"many\"}}}}\n",
+    );
+    fixture.append(
+        &rollout,
+        "{\"type\":\"event_msg\",\"payload\":{\"type\":\"task_complete\",\"last_agent_message\":7}}\n",
+    );
+    let changes = fixture.read(&rollout);
+    assert!(matches!(
+        &changes[..],
+        [Changed::Malformed(first), Changed::Malformed(second)]
+            if matches!(first.parse_failure, ParseFailure::InvalidField(_))
+            && matches!(second.parse_failure, ParseFailure::InvalidField(_))
+    ));
+}
+
+#[test]
+fn a_hook_path_that_exists_already_is_attached_and_read_at_once() {
+    let fixture = Fixture::fixture(PRODUCER);
+    fixture.configure();
+    let rollout = fixture.path("sessions").join("rollout.jsonl");
+    fixture.append(&rollout, TASK_STARTED);
+    fixture.started(Some(&rollout)).unwrap();
+    let record = fixture.record();
+    assert!(matches!(record.rollout, Rollout::Watched(_)));
+    assert_eq!(record.observed.state, State::Flowing(Flow::Working));
+}
