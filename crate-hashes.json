@@ -1,6 +1,6 @@
 {
-  "git+https://github.com/LiGoldragon/codex-harness-nexus?rev=28436c24ed40e11eab40ae865c77ccd48cdf3e72#0.1.0": "18apww559mkm06gsnd68n3sdpam4a57p7zy2iyl2bjn9fj015d9l",
-  "git+https://github.com/LiGoldragon/codex-harness-nexus?rev=28436c24ed40e11eab40ae865c77ccd48cdf3e72#codex-harness-translator@0.1.0": "18apww559mkm06gsnd68n3sdpam4a57p7zy2iyl2bjn9fj015d9l",
+  "git+https://github.com/LiGoldragon/codex-harness-nexus?rev=e178db0a559f9740e16b3d70ac40d46a6ae4166b#0.1.0": "0alqmrxwv3ikpn0gig1bb0z8r9l7sw4mpnpb12dwr9rchqn1x393",
+  "git+https://github.com/LiGoldragon/codex-harness-nexus?rev=e178db0a559f9740e16b3d70ac40d46a6ae4166b#codex-harness-translator@0.1.0": "0alqmrxwv3ikpn0gig1bb0z8r9l7sw4mpnpb12dwr9rchqn1x393",
   "git+https://github.com/LiGoldragon/datom-codec?rev=09a0526#0.33.1": "18cplyk9f5nrqs35fgqpimfi507l38qvkmkx3z2qm2vwi1rlii2d",
   "git+https://github.com/LiGoldragon/datom-codec?rev=09a0526#datom-codec-derive@0.32.3": "18cplyk9f5nrqs35fgqpimfi507l38qvkmkx3z2qm2vwi1rlii2d",
   "git+https://github.com/LiGoldragon/ethos-zero?rev=1976e45#22.0.0": "12b6np5n8knlpv2rb98g0m04n6xxaprd8n5hy4wgw658h5vg216j",
@@ -9,7 +9,7 @@
   "git+https://github.com/LiGoldragon/harness-nexus-library?rev=3613d63d0994de7841bcf6f070c83bebb0ddfa5a#0.1.0": "0s56yv6vhd8992hbqn277nmdqxmpn2xkvf9szlispr71fmq00k2j",
   "git+https://github.com/LiGoldragon/memory-engine?rev=3261088#0.20.0": "19dknfksxr4610qanc29dmg0m721033lxa4ydq9xqga2c3m0znkf",
   "git+https://github.com/LiGoldragon/memory.git?rev=e78519c2fc8f213246328bf28f9e38f9a216f76e#memory@0.2.0": "0hkqy89l7h93a5pn0kkyq6sbvz7wnawn86f19j6lgvqza0s6mcrb",
-  "git+https://github.com/LiGoldragon/meta-signal-codex-harness-nexus?rev=30e24bf549ab07d17bf413b7c952a3373bf1f781#0.3.0": "0ss2jfwr2z71v4cxwqvv9rmzdanc81q2bs1lfqdrcf0al9n4zdf9",
+  "git+https://github.com/LiGoldragon/meta-signal-codex-harness-nexus?rev=b6039b70491a2b4b778af4b094c3b5782da2964e#0.4.0": "0zva0kky3wib9jvf1fzd8j8vm16wk2gfrji36cvaipmx7lm60gyd",
   "git+https://github.com/LiGoldragon/nexus?rev=63a2d477ca194913c847d15f227637d84fbe9aeb#nexus-exchange@0.1.1": "09xh9bps4i0yzcwj3ly4skzwk40pi50xga66032fd2cz9lq66b9p",
   "git+https://github.com/LiGoldragon/nexus?rev=63a2d477ca194913c847d15f227637d84fbe9aeb#nexus-querying@0.1.1": "09xh9bps4i0yzcwj3ly4skzwk40pi50xga66032fd2cz9lq66b9p",
   "git+https://github.com/LiGoldragon/nexus?rev=63a2d477ca194913c847d15f227637d84fbe9aeb#nexus-serving@0.1.1": "09xh9bps4i0yzcwj3ly4skzwk40pi50xga66032fd2cz9lq66b9p",

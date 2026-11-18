@@ -183,6 +183,8 @@ trait Pairing: Sized {
     /// answered.
     fn ask(&self, input: Input) -> Result<Output, String>;
     fn subscribe(&self) -> Subscription;
+    /// The configuration as the meta socket reads it out.
+    fn readout(&self) -> meta::ConfigurationReadout;
     /// Sets each of the Nexus's settings, checking each answer.
     fn configured(&self);
     /// Ends one member and waits for the launcher: it ends the other and
@@ -308,6 +310,13 @@ impl Pairing for Pair {
         Subscription { child, answers }
     }
 
+    fn readout(&self) -> meta::ConfigurationReadout {
+        match self.meta(meta::Input::Subscribe) {
+            meta::Output::Subscribed(Frame::Opened(readout)) => readout,
+            other => panic!("the configuration is read back: {other:?}"),
+        }
+    }
+
     fn configured(&self) {
         for set in self.scratch.settings() {
             assert_eq!(
@@ -377,10 +386,60 @@ impl Drop for Subscription {
 }
 
 fn session_start() -> Input {
+    session_start_at(None)
+}
+
+/// The session's start, naming the rollout it will write, if it names one.
+fn session_start_at(rollout: Option<&Path>) -> Input {
     Input::Report(Hook::SessionStart(SessionStart_Data {
         session: harness::Session(SESSION.into()),
-        file_path_option: None,
+        file_path_option: rollout.map(|path| FilePath(path.to_string_lossy().into_owned())),
     }))
+}
+
+/// The session as it starts, before its rollout is read.
+fn dry() -> Observed {
+    Observed {
+        flow_id: FlowId(FLOW.into()),
+        state: State::Dry,
+        tokens: Tokens(0),
+        background_work_vector: vec![],
+    }
+}
+
+/// Follows a subscription until the turn ends, and answers each transition.
+trait Turning {
+    fn turn(&self) -> Vec<(Event, State)>;
+}
+
+impl Turning for Subscription {
+    fn turn(&self) -> Vec<(Event, State)> {
+        let mut transitions = vec![];
+        while !matches!(transitions.last(), Some((Event::TurnEnded, _))) {
+            match self.next() {
+                Output::Subscribed(Frame::Changed(Changed::Transition(transition))) => {
+                    assert_eq!(transition.flow_id, FlowId(FLOW.into()));
+                    transitions.push((transition.event, transition.state));
+                }
+                other => panic!("the subscriber follows each transition: {other:?}"),
+            }
+        }
+        transitions
+    }
+}
+
+/// A sessions directory made whole beside the scratch, holding one rollout
+/// of a whole turn, then moved to `directory`, so it appears with its
+/// rollout already inside.
+fn made_with_rollout(scratch: &Scratch, directory: &Path, rollout: &str) {
+    let staged = scratch.path("staging").join("sessions");
+    fs::create_dir(&staged).expect("a staged sessions directory");
+    fs::write(
+        staged.join(rollout),
+        [SESSION_META, TASK_STARTED, TOKEN_COUNT, TASK_COMPLETE].concat(),
+    )
+    .expect("a staged rollout");
+    fs::rename(&staged, directory).expect("the sessions directory moved in");
 }
 
 #[test]
@@ -410,10 +469,13 @@ fn the_public_socket_opens_only_once_the_configuration_is_ready() {
         sockets.public.exists(),
         "the public socket is open once the configuration is ready"
     );
-    let meta::Output::Subscribed(Frame::Opened(configuration)) = pair.meta(meta::Input::Subscribe)
-    else {
-        panic!("the configuration is read back");
-    };
+    let readout = pair.readout();
+    assert_eq!(
+        readout.awaited_directories,
+        meta::AwaitedDirectories(vec![]),
+        "a sessions directory there is not awaited"
+    );
+    let configuration = readout.configuration;
     assert_eq!(
         configuration,
         meta::Configuration {
@@ -472,10 +534,7 @@ fn an_invalid_setting_is_refused_typed_and_never_kept() {
             meta::Output::ConfigureRefused(refusal)
         );
     }
-    let meta::Output::Subscribed(Frame::Opened(configuration)) = pair.meta(meta::Input::Subscribe)
-    else {
-        panic!("the configuration is read back");
-    };
+    let configuration = pair.readout().configuration;
     assert_eq!(
         configuration,
         meta::Configuration {
@@ -539,11 +598,10 @@ fn the_configuration_readout_shows_the_translators_text_budget() {
         ))),
         meta::Output::Configured(meta::Set::TextBudget(budget.clone()))
     );
-    let meta::Output::Subscribed(Frame::Opened(configuration)) = pair.meta(meta::Input::Subscribe)
-    else {
-        panic!("the configuration is read back");
-    };
-    assert_eq!(configuration.text_budget_option, Some(budget));
+    assert_eq!(
+        pair.readout().configuration.text_budget_option,
+        Some(budget)
+    );
     pair.end(Member::Nexus);
 }
 
@@ -561,16 +619,10 @@ fn a_rollout_in_a_sessions_directory_is_discovered_folded_and_shown() {
         "a hook before its session started names no session"
     );
     assert_eq!(pair.ask(session_start()), Ok(Output::Reported));
-    let dry = Observed {
-        flow_id: FlowId(FLOW.into()),
-        state: State::Dry,
-        tokens: Tokens(0),
-        background_work_vector: vec![],
-    };
     let subscription = pair.subscribe();
     assert_eq!(
         subscription.next(),
-        Output::Subscribed(Frame::Opened(Observations(vec![dry])))
+        Output::Subscribed(Frame::Opened(Observations(vec![dry()])))
     );
     // A capacity set while a subscriber follows resizes its publisher.
     let resized = meta::Set::SubscriberCapacity(meta::Capacity(8));
@@ -582,16 +634,7 @@ fn a_rollout_in_a_sessions_directory_is_discovered_folded_and_shown() {
         &format!("rollout-{SESSION}.jsonl"),
         &[SESSION_META, TASK_STARTED, TOKEN_COUNT, TASK_COMPLETE],
     );
-    let mut transitions = vec![];
-    while !matches!(transitions.last(), Some((Event::TurnEnded, _))) {
-        match subscription.next() {
-            Output::Subscribed(Frame::Changed(Changed::Transition(transition))) => {
-                assert_eq!(transition.flow_id, FlowId(FLOW.into()));
-                transitions.push((transition.event, transition.state));
-            }
-            other => panic!("the subscriber follows each transition: {other:?}"),
-        }
-    }
+    let transitions = subscription.turn();
     let [
         (Event::PromptSubmitted, State::Flowing(Flow::Working)),
         (Event::ContextSize(tokens), State::Flowing(Flow::Working)),
@@ -618,34 +661,152 @@ fn a_rollout_in_a_sessions_directory_is_discovered_folded_and_shown() {
 }
 
 #[test]
-fn a_sessions_directory_that_cannot_be_watched_leaves_the_nexus_to_open_later() {
+fn an_absent_sessions_directory_is_configured_awaited_and_found_once_it_is_made() {
     let pair = Pair::started();
-    let missing = meta::Set::SessionsDirectories(meta::SessionsDirectories(vec![FilePath(
-        pair.scratch.text("missing"),
-    )]));
+    let sessions = pair.scratch.path("later/.codex/sessions");
+    let directory = FilePath(sessions.to_string_lossy().into_owned());
     for set in pair.scratch.settings() {
         let set = match set {
-            meta::Set::SessionsDirectories(_) => missing.clone(),
+            meta::Set::SessionsDirectories(_) => {
+                meta::Set::SessionsDirectories(meta::SessionsDirectories(vec![directory.clone()]))
+            }
             set => set,
         };
-        pair.meta(meta::Input::Configure(set));
+        assert_eq!(
+            pair.meta(meta::Input::Configure(set.clone())),
+            meta::Output::Configured(set),
+            "a sessions directory not yet there is configured"
+        );
     }
     assert!(
-        !pair.sockets().public.exists(),
-        "no public socket opens without its watch"
-    );
-    let present = meta::Set::SessionsDirectories(meta::SessionsDirectories(vec![FilePath(
-        pair.scratch.text("sessions"),
-    )]));
-    assert_eq!(
-        pair.meta(meta::Input::Configure(present.clone())),
-        meta::Output::Configured(present)
-    );
-    assert!(
         pair.sockets().public.exists(),
-        "a sessions directory that can be watched opens the Nexus"
+        "the public socket does not wait for a sessions directory"
     );
+    let readout = pair.readout();
+    assert_eq!(
+        readout.configuration.sessions_directories_option,
+        Some(meta::SessionsDirectories(vec![directory.clone()])),
+        "it is recorded"
+    );
+    assert_eq!(
+        readout.awaited_directories,
+        meta::AwaitedDirectories(vec![directory.clone()]),
+        "it is awaited"
+    );
+    let name = format!("rollout-{SESSION}.jsonl");
+    assert_eq!(
+        pair.ask(session_start_at(Some(&sessions.join(&name)))),
+        Ok(Output::Reported)
+    );
+    let subscription = pair.subscribe();
+    assert_eq!(
+        subscription.next(),
+        Output::Subscribed(Frame::Opened(Observations(vec![dry()])))
+    );
+    fs::create_dir(pair.scratch.path("later")).expect("the first level");
+    fs::create_dir(pair.scratch.path("later/.codex")).expect("the second level");
+    made_with_rollout(&pair.scratch, &sessions, &name);
+    let transitions = subscription.turn();
+    assert_eq!(
+        transitions.first(),
+        Some(&(Event::PromptSubmitted, State::Flowing(Flow::Working))),
+        "the rollout inside is read from its start: {transitions:?}"
+    );
+    assert_eq!(
+        pair.readout().awaited_directories,
+        meta::AwaitedDirectories(vec![]),
+        "nothing is awaited once it is there"
+    );
+    drop(subscription);
+    pair.end(Member::Nexus);
+}
+
+#[test]
+fn a_sessions_directory_that_cannot_be_read_is_refused_typed_and_never_kept() {
+    let pair = Pair::started();
+    pair.configured();
+    let locked = pair.scratch.path("locked");
+    fs::create_dir(&locked).expect("a directory to lock");
+    fs::set_permissions(&locked, fs::Permissions::from_mode(0o000)).expect("locked");
+    assert!(
+        fs::read_dir(&locked)
+            .is_err_and(|error| error.kind() == std::io::ErrorKind::PermissionDenied),
+        "this test runs as a user whom mode 000 denies"
+    );
+    let set = meta::Set::SessionsDirectories(meta::SessionsDirectories(vec![FilePath(
+        pair.scratch.text("locked"),
+    )]));
+    let answer = pair.meta(meta::Input::Configure(set));
+    fs::set_permissions(&locked, fs::Permissions::from_mode(0o755)).expect("unlocked");
+    let meta::Output::ConfigureRefused(meta::ConfigurationRefusal::UnwatchableDirectory(
+        unwatchable,
+    )) = answer
+    else {
+        panic!("a directory that cannot be watched is refused typed: {answer:?}");
+    };
+    assert_eq!(unwatchable.file_path, FilePath(pair.scratch.text("locked")));
+    assert!(
+        unwatchable.diagnostic.0.contains("Permission denied"),
+        "the refusal tells why: {}",
+        unwatchable.diagnostic.0
+    );
+    let readout = pair.readout();
+    assert_eq!(
+        readout.configuration.sessions_directories_option,
+        Some(meta::SessionsDirectories(vec![FilePath(
+            pair.scratch.text("sessions")
+        )])),
+        "the refused directories are never kept"
+    );
+    assert_eq!(
+        readout.awaited_directories,
+        meta::AwaitedDirectories(vec![])
+    );
+    // The watch before the refusal still serves.
+    let name = format!("rollout-{SESSION}.jsonl");
     assert_eq!(pair.ask(session_start()), Ok(Output::Reported));
+    let subscription = pair.subscribe();
+    assert_eq!(
+        subscription.next(),
+        Output::Subscribed(Frame::Opened(Observations(vec![dry()])))
+    );
+    pair.scratch.placed(
+        &name,
+        &[SESSION_META, TASK_STARTED, TOKEN_COUNT, TASK_COMPLETE],
+    );
+    subscription.turn();
+    drop(subscription);
+    pair.end(Member::Nexus);
+}
+
+#[test]
+fn a_sessions_directory_removed_and_made_anew_is_watched_again() {
+    let pair = Pair::started();
+    pair.configured();
+    let sessions = pair.scratch.path("sessions");
+    let name = format!("rollout-{SESSION}.jsonl");
+    assert_eq!(
+        pair.ask(session_start_at(Some(&sessions.join(&name)))),
+        Ok(Output::Reported)
+    );
+    let subscription = pair.subscribe();
+    assert_eq!(
+        subscription.next(),
+        Output::Subscribed(Frame::Opened(Observations(vec![dry()])))
+    );
+    fs::remove_dir(&sessions).expect("the sessions directory removed");
+    made_with_rollout(&pair.scratch, &sessions, &name);
+    let transitions = subscription.turn();
+    assert_eq!(
+        transitions.first(),
+        Some(&(Event::PromptSubmitted, State::Flowing(Flow::Working))),
+        "the rollout in the directory made anew is read: {transitions:?}"
+    );
+    assert_eq!(
+        pair.readout().awaited_directories,
+        meta::AwaitedDirectories(vec![])
+    );
+    drop(subscription);
     pair.end(Member::Nexus);
 }
 

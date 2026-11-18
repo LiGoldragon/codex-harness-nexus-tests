@@ -330,8 +330,8 @@ rec {
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/LiGoldragon/codex-harness-nexus";
-          rev = "28436c24ed40e11eab40ae865c77ccd48cdf3e72";
-          sha256 = "18apww559mkm06gsnd68n3sdpam4a57p7zy2iyl2bjn9fj015d9l";
+          rev = "e178db0a559f9740e16b3d70ac40d46a6ae4166b";
+          sha256 = "0alqmrxwv3ikpn0gig1bb0z8r9l7sw4mpnpb12dwr9rchqn1x393";
         };
         libName = "codex_harness_nexus";
         dependencies = [
@@ -531,8 +531,8 @@ rec {
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/LiGoldragon/codex-harness-nexus";
-          rev = "28436c24ed40e11eab40ae865c77ccd48cdf3e72";
-          sha256 = "18apww559mkm06gsnd68n3sdpam4a57p7zy2iyl2bjn9fj015d9l";
+          rev = "e178db0a559f9740e16b3d70ac40d46a6ae4166b";
+          sha256 = "0alqmrxwv3ikpn0gig1bb0z8r9l7sw4mpnpb12dwr9rchqn1x393";
         };
         libName = "codex_harness_translator";
         dependencies = [
@@ -1587,13 +1587,13 @@ rec {
       };
       "meta-signal-codex-harness-nexus" = rec {
         crateName = "meta-signal-codex-harness-nexus";
-        version = "0.3.0";
+        version = "0.4.0";
         edition = "2024";
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/LiGoldragon/meta-signal-codex-harness-nexus";
-          rev = "30e24bf549ab07d17bf413b7c952a3373bf1f781";
-          sha256 = "0ss2jfwr2z71v4cxwqvv9rmzdanc81q2bs1lfqdrcf0al9n4zdf9";
+          rev = "b6039b70491a2b4b778af4b094c3b5782da2964e";
+          sha256 = "0zva0kky3wib9jvf1fzd8j8vm16wk2gfrji36cvaipmx7lm60gyd";
         };
         libName = "meta_signal_codex_harness_nexus";
         dependencies = [

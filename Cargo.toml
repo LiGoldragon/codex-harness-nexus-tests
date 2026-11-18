@@ -10,11 +10,11 @@ publish = false
 [dependencies]
 harness = { package = "harness-nexus-library", git = "https://github.com/LiGoldragon/harness-nexus-library", rev = "3613d63d0994de7841bcf6f070c83bebb0ddfa5a", default-features = false }
 flow = { package = "flow-ethos", git = "https://github.com/LiGoldragon/flow", rev = "062ef9e1", default-features = false }
-codex-harness-nexus = { git = "https://github.com/LiGoldragon/codex-harness-nexus", rev = "28436c24ed40e11eab40ae865c77ccd48cdf3e72" }
-codex-harness-translator = { git = "https://github.com/LiGoldragon/codex-harness-nexus", rev = "28436c24ed40e11eab40ae865c77ccd48cdf3e72", features = ["text"] }
+codex-harness-nexus = { git = "https://github.com/LiGoldragon/codex-harness-nexus", rev = "e178db0a559f9740e16b3d70ac40d46a6ae4166b" }
+codex-harness-translator = { git = "https://github.com/LiGoldragon/codex-harness-nexus", rev = "e178db0a559f9740e16b3d70ac40d46a6ae4166b", features = ["text"] }
 signal = { git = "https://github.com/LiGoldragon/signal", rev = "4f5cbb9", default-features = false }
 signal-codex-harness-nexus = { git = "https://github.com/LiGoldragon/signal-codex-harness-nexus", rev = "6a6fd1c53a2186689ee31e849203e7dd67f76c99", default-features = false, features = ["datom"] }
-meta-signal-codex-harness-nexus = { git = "https://github.com/LiGoldragon/meta-signal-codex-harness-nexus", rev = "30e24bf549ab07d17bf413b7c952a3373bf1f781", default-features = false, features = ["datom"] }
+meta-signal-codex-harness-nexus = { git = "https://github.com/LiGoldragon/meta-signal-codex-harness-nexus", rev = "b6039b70491a2b4b778af4b094c3b5782da2964e", default-features = false, features = ["datom"] }
 nexus-exchange = { git = "https://github.com/LiGoldragon/nexus", rev = "63a2d477ca194913c847d15f227637d84fbe9aeb", default-features = false }
 shared-translator = { package = "translator", git = "https://github.com/LiGoldragon/translator", rev = "29601a3", default-features = false, features = ["text", "unix"] }
 translator-serving = { git = "https://github.com/LiGoldragon/translator", rev = "8e744a4503f13dd748e7e222f5f7aa5443b28961", default-features = false, features = ["text"] }

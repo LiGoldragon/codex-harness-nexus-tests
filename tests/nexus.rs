@@ -7,10 +7,13 @@ use std::fs::{self, OpenOptions};
 use std::io::Write;
 use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
+use std::sync::mpsc::Receiver;
 use std::sync::{Mutex, RwLock};
+use std::time::Duration;
 
 use codex_harness_nexus::{
-    HarnessNexus, Opening, Operation, Performing, Remembering, Rollout, SessionRecord, Store,
+    Channelled, Followed, HarnessNexus, Locking, Opening, Operation, Performing, Remembering,
+    Rollout, SessionRecord, SessionsWatch, Store, WatchWord, Watching,
 };
 use codex_harness_translator::{CodexHarnessTranslator, TranslatorSettings};
 use flow::FlowId;
@@ -37,10 +40,15 @@ const TASK_COMPLETE_NULL: &str = include_str!("../fixtures/task-complete-null.js
 const TURN_ABORTED: &str = include_str!("../fixtures/turn-aborted.jsonl");
 const SESSION: &str = "01a1e4cb-c2d2-7d91-86ea-0b4c85ce34be";
 const FLOW: &str = "4c85ce";
+/// The longest the kernel's next word is waited for.
+const DEADLINE: Duration = Duration::from_secs(60);
 
+/// A Nexus in this process, and the words of its watch, which the test
+/// follows itself, as the daemon's watch thread does.
 struct Fixture {
     directory: tempfile::TempDir,
     nexus: HarnessNexus<CodexHarnessTranslator>,
+    words: Receiver<WatchWord>,
 }
 
 trait Fixtured: Sized {
@@ -52,6 +60,35 @@ trait Fixtured: Sized {
     fn append(&self, path: &Path, text: &str);
     fn read(&self, path: &Path) -> Vec<Changed>;
     fn record(&self) -> SessionRecord;
+    fn text(&self, name: &str) -> String;
+    /// Follows the kernel's words until `done` holds after one, and answers
+    /// what that one told.
+    fn follow_until(&self, done: &dyn Fn(&Self, &Followed) -> bool) -> Followed;
+    /// Where the watch of the one configured sessions directory rests.
+    fn resting(&self) -> Option<PathBuf>;
+    fn awaited(&self) -> Vec<FilePath>;
+}
+
+/// A Nexus made fresh on a Memory, and the words of its watch.
+trait Made: Sized {
+    fn made(memory: &Path) -> (Self, Receiver<WatchWord>);
+}
+
+impl Made for HarnessNexus<CodexHarnessTranslator> {
+    fn made(memory: &Path) -> (Self, Receiver<WatchWord>) {
+        let (sessions_watch, words) = SessionsWatch::channelled();
+        (
+            HarnessNexus {
+                store: Store::open(memory).unwrap(),
+                translator: CodexHarnessTranslator::in_process(),
+                serial: Mutex::new(()),
+                observations: Mutex::new(None),
+                configurations: Mutex::new(None),
+                sessions_watch: Mutex::new(sessions_watch),
+            },
+            words,
+        )
+    }
 }
 
 /// The translator's emissions, answered in this process.
@@ -85,29 +122,27 @@ impl Fixtured for Fixture {
         let script = directory.path().join("flow-id");
         fs::write(&script, producer).unwrap();
         fs::set_permissions(&script, fs::Permissions::from_mode(0o755)).unwrap();
-        let nexus = HarnessNexus {
-            store: Store::open(&directory.path().join("state").join("codex-harness.memory"))
-                .unwrap(),
-            translator: CodexHarnessTranslator::in_process(),
-            serial: Mutex::new(()),
-            observations: Mutex::new(None),
-            configurations: Mutex::new(None),
-        };
-        Self { directory, nexus }
+        let (nexus, words) =
+            HarnessNexus::made(&directory.path().join("state").join("codex-harness.memory"));
+        Self {
+            directory,
+            nexus,
+            words,
+        }
     }
 
     fn reopened(self) -> Self {
-        let Self { directory, nexus } = self;
+        let Self {
+            directory, nexus, ..
+        } = self;
         drop(nexus);
-        let nexus = HarnessNexus {
-            store: Store::open(&directory.path().join("state").join("codex-harness.memory"))
-                .unwrap(),
-            translator: CodexHarnessTranslator::in_process(),
-            serial: Mutex::new(()),
-            observations: Mutex::new(None),
-            configurations: Mutex::new(None),
-        };
-        Self { directory, nexus }
+        let (nexus, words) =
+            HarnessNexus::made(&directory.path().join("state").join("codex-harness.memory"));
+        Self {
+            directory,
+            nexus,
+            words,
+        }
     }
 
     fn path(&self, name: &str) -> PathBuf {
@@ -161,6 +196,40 @@ impl Fixtured for Fixture {
             .recall(Session(SESSION.into()))
             .unwrap()
             .expect("the session is remembered")
+    }
+
+    fn text(&self, name: &str) -> String {
+        self.path(name).to_string_lossy().into_owned()
+    }
+
+    fn follow_until(&self, done: &dyn Fn(&Self, &Followed) -> bool) -> Followed {
+        loop {
+            let word = self
+                .words
+                .recv_timeout(DEADLINE)
+                .expect("the kernel tells the watch");
+            let followed = self.nexus.follow(word);
+            assert_eq!(followed.failures, vec![], "the watch moves without failing");
+            if done(self, &followed) {
+                return followed;
+            }
+        }
+    }
+
+    fn resting(&self) -> Option<PathBuf> {
+        self.nexus
+            .sessions_watch
+            .locked()
+            .current
+            .as_ref()?
+            .placements[0]
+            .resting
+            .clone()
+    }
+
+    fn awaited(&self) -> Vec<FilePath> {
+        use codex_harness_nexus::ConfigurationReading;
+        self.nexus.readout().unwrap().awaited_directories.0
     }
 }
 
@@ -491,23 +560,18 @@ fn a_subscriber_opens_on_the_state_and_follows_each_change() {
 
 #[test]
 fn the_kernel_names_a_rollout_written_in_a_nested_sessions_directory() {
-    use codex_harness_nexus::{Awaiting, Waking, Watcher};
+    use codex_harness_nexus::Waking;
     let fixture = Fixture::fixture(PRODUCER);
-    fixture.configure();
     let day = fixture.path("sessions").join("2026").join("11");
     fs::create_dir_all(&day).unwrap();
+    fixture.configure();
     let rollout = day.join("rollout.jsonl");
     fixture.started(Some(&rollout)).unwrap();
-    let watcher = Watcher::open(vec![FilePath(
-        fixture.path("sessions").to_string_lossy().into_owned(),
-    )])
-    .unwrap();
     fixture.append(&rollout, TASK_STARTED);
     let path = FilePath(rollout.to_string_lossy().into_owned());
-    let mut written = vec![];
-    while !written.contains(&path) {
-        written.extend(watcher.written().unwrap());
-    }
+    let written = fixture
+        .follow_until(&|_, followed| followed.written.contains(&path))
+        .written;
     let operations = fixture.nexus.woken(written).unwrap();
     assert_eq!(operations, vec![Operation::Discovering(path.clone())]);
     for operation in operations {
@@ -526,4 +590,83 @@ fn the_kernel_names_a_rollout_written_in_a_nested_sessions_directory() {
         1,
         "one look at startup reads the watched rollout"
     );
+}
+
+#[test]
+fn an_absent_sessions_directory_is_awaited_and_its_watch_moves_down_until_it_is_there() {
+    use codex_harness_nexus::Waking;
+    use meta_signal_codex_harness_nexus::Answering;
+    let fixture = Fixture::fixture(PRODUCER);
+    fixture.configure();
+    let later = fixture.path("later");
+    let codex = later.join(".codex");
+    let sessions = codex.join("sessions");
+    let directory = FilePath(sessions.to_string_lossy().into_owned());
+    let set = Set::SessionsDirectories(SessionsDirectories(vec![directory.clone()]));
+    assert_eq!(
+        fixture.nexus.configure(&set),
+        Ok(set.clone()),
+        "a directory not yet there is configured"
+    );
+    assert_eq!(fixture.awaited(), vec![directory.clone()]);
+    assert_eq!(
+        fixture.resting(),
+        Some(fixture.directory.path().to_path_buf()),
+        "the watch rests on the nearest ancestor there"
+    );
+    let rollout = sessions.join("rollout.jsonl");
+    fixture.started(Some(&rollout)).unwrap();
+    for level in [&later, &codex] {
+        fs::create_dir(level).unwrap();
+        fixture.follow_until(&|fixture, _| fixture.resting().as_ref() == Some(level));
+        assert_eq!(fixture.awaited(), vec![directory.clone()]);
+    }
+    // The directory appears holding its rollout already.
+    let staged = fixture.path("staging-sessions");
+    fs::create_dir(&staged).unwrap();
+    fixture.append(&staged.join("rollout.jsonl"), SESSION_META);
+    fs::rename(&staged, &sessions).unwrap();
+    let followed = fixture.follow_until(&|_, followed| !followed.arrived.is_empty());
+    assert_eq!(followed.arrived, vec![directory.clone()]);
+    assert_eq!(fixture.resting(), Some(sessions.clone()));
+    assert_eq!(
+        fixture.awaited(),
+        vec![],
+        "nothing is awaited once it is there"
+    );
+    assert_eq!(
+        fixture.nexus.startup().unwrap(),
+        vec![Operation::Discovering(FilePath(
+            rollout.to_string_lossy().into_owned()
+        ))],
+        "the look on its arrival finds the rollout already inside"
+    );
+}
+
+#[test]
+fn a_sessions_directory_removed_is_awaited_again_and_watched_once_made_anew() {
+    let fixture = Fixture::fixture(PRODUCER);
+    fixture.configure();
+    let sessions = fixture.path("sessions");
+    let directory = FilePath(fixture.text("sessions"));
+    assert_eq!(fixture.awaited(), vec![]);
+    fs::remove_dir(&sessions).unwrap();
+    fixture.follow_until(&|fixture, _| !fixture.awaited().is_empty());
+    assert_eq!(fixture.awaited(), vec![directory.clone()]);
+    assert_eq!(
+        fixture.resting(),
+        Some(fixture.directory.path().to_path_buf())
+    );
+    fs::create_dir(&sessions).unwrap();
+    let followed = fixture.follow_until(&|_, followed| !followed.arrived.is_empty());
+    assert_eq!(followed.arrived, vec![directory.clone()]);
+    assert_eq!(fixture.awaited(), vec![]);
+    // Removed and made again before the watch hears of it: the directory
+    // made anew is watched, and told as come to be there.
+    fs::remove_dir(&sessions).unwrap();
+    fs::create_dir(&sessions).unwrap();
+    let followed = fixture.follow_until(&|_, followed| !followed.arrived.is_empty());
+    assert_eq!(followed.arrived, vec![directory]);
+    assert_eq!(fixture.resting(), Some(sessions));
+    assert_eq!(fixture.awaited(), vec![]);
 }
