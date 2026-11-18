@@ -81,7 +81,7 @@ checksum = "9330f8b2ff13f34540b44e946ef35111825727b38d33286ef986142615121801"
 [[package]]
 name = "codex-harness-nexus"
 version = "0.1.0"
-source = "git+https://github.com/LiGoldragon/codex-harness-nexus?rev=88daba6b924581f057630ce957a242c279a73262#88daba6b924581f057630ce957a242c279a73262"
+source = "git+https://github.com/LiGoldragon/codex-harness-nexus?rev=db16ba3682a1820a1365899edd42edb5a07aedbb#db16ba3682a1820a1365899edd42edb5a07aedbb"
 dependencies = [
  "flow-ethos",
  "futures-channel",
@@ -117,7 +117,7 @@ dependencies = [
 [[package]]
 name = "codex-harness-translator"
 version = "0.1.0"
-source = "git+https://github.com/LiGoldragon/codex-harness-nexus?rev=88daba6b924581f057630ce957a242c279a73262#88daba6b924581f057630ce957a242c279a73262"
+source = "git+https://github.com/LiGoldragon/codex-harness-nexus?rev=db16ba3682a1820a1365899edd42edb5a07aedbb#db16ba3682a1820a1365899edd42edb5a07aedbb"
 dependencies = [
  "codex-harness-nexus",
  "flow-ethos",

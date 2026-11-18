@@ -310,8 +310,8 @@ rec {
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/LiGoldragon/codex-harness-nexus";
-          rev = "88daba6b924581f057630ce957a242c279a73262";
-          sha256 = "1i0z02h5bsfywif3s7q0j33zskg9sj7lnd0jv4kp69zjm2i1iykg";
+          rev = "db16ba3682a1820a1365899edd42edb5a07aedbb";
+          sha256 = "08li674icmmk92apdmyqf8ylkf4b1i9la5irgbqk12s0qsjgz74k";
         };
         libName = "codex_harness_nexus";
         dependencies = [
@@ -458,8 +458,8 @@ rec {
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/LiGoldragon/codex-harness-nexus";
-          rev = "88daba6b924581f057630ce957a242c279a73262";
-          sha256 = "1i0z02h5bsfywif3s7q0j33zskg9sj7lnd0jv4kp69zjm2i1iykg";
+          rev = "db16ba3682a1820a1365899edd42edb5a07aedbb";
+          sha256 = "08li674icmmk92apdmyqf8ylkf4b1i9la5irgbqk12s0qsjgz74k";
         };
         libName = "codex_harness_translator";
         dependencies = [

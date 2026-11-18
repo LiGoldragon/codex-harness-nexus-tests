@@ -10,8 +10,8 @@ publish = false
 [dependencies]
 harness = { package = "harness-nexus-library", git = "https://github.com/LiGoldragon/harness-nexus-library", rev = "3613d63d0994de7841bcf6f070c83bebb0ddfa5a", default-features = false }
 flow = { package = "flow-ethos", git = "https://github.com/LiGoldragon/flow", rev = "062ef9e1", default-features = false }
-codex-harness-nexus = { git = "https://github.com/LiGoldragon/codex-harness-nexus", rev = "88daba6b924581f057630ce957a242c279a73262" }
-codex-harness-translator = { git = "https://github.com/LiGoldragon/codex-harness-nexus", rev = "88daba6b924581f057630ce957a242c279a73262" }
+codex-harness-nexus = { git = "https://github.com/LiGoldragon/codex-harness-nexus", rev = "db16ba3682a1820a1365899edd42edb5a07aedbb" }
+codex-harness-translator = { git = "https://github.com/LiGoldragon/codex-harness-nexus", rev = "db16ba3682a1820a1365899edd42edb5a07aedbb" }
 signal = { git = "https://github.com/LiGoldragon/signal", rev = "4f5cbb9", default-features = false }
 signal-codex-harness-nexus = { git = "https://github.com/LiGoldragon/signal-codex-harness-nexus", rev = "8bd9dc670b8103adcabf447b70d3a4fc195df7a5", default-features = false }
 meta-signal-codex-harness-nexus = { git = "https://github.com/LiGoldragon/meta-signal-codex-harness-nexus", rev = "8a504bc80b12d7f75860c276f64e06f387df3ba0", default-features = false }
