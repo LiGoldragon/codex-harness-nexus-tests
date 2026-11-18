@@ -15,7 +15,7 @@ use codex_harness_nexus::{
 use codex_harness_translator::Translator;
 use flow::FlowId;
 use futures_util::StreamExt;
-use harness::{Event, FilePath, Flow, Observed, Response, Session, State, Tokens};
+use harness::{Event, FilePath, Flow, Observed, Response, Session, State};
 use meta_signal_codex_harness_nexus::{
     Capacity, ConfigurationRefusal, FlowsRoot, IdentityProducer, SessionsDirectories, Set,
     ThreadDatabases,
