@@ -330,8 +330,8 @@ rec {
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/LiGoldragon/codex-harness-nexus";
-          rev = "c3ad7c4ab1cf751b169a9fb27018a8f84fd60d5e";
-          sha256 = "0znblacqyilb5qa145qgx0jlakv59qxszi32ipx9pphpmzgr65ya";
+          rev = "d312b2ffec496855edbb095af63923393b03d212";
+          sha256 = "1plzsdqg0vnvbs8lysay7b5q3qn7yhg1y414aifnzcq5gkyqgn8r";
         };
         libName = "codex_harness_nexus";
         dependencies = [
@@ -537,8 +537,8 @@ rec {
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/LiGoldragon/codex-harness-nexus";
-          rev = "c3ad7c4ab1cf751b169a9fb27018a8f84fd60d5e";
-          sha256 = "0znblacqyilb5qa145qgx0jlakv59qxszi32ipx9pphpmzgr65ya";
+          rev = "d312b2ffec496855edbb095af63923393b03d212";
+          sha256 = "1plzsdqg0vnvbs8lysay7b5q3qn7yhg1y414aifnzcq5gkyqgn8r";
         };
         libName = "codex_harness_translator";
         dependencies = [
@@ -1784,13 +1784,13 @@ rec {
       };
       "nexus-exchange" = rec {
         crateName = "nexus-exchange";
-        version = "0.2.0";
+        version = "0.3.0";
         edition = "2024";
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/LiGoldragon/nexus";
-          rev = "fb3441f952ecba19dd3e9f288a39e7275f8ae700";
-          sha256 = "13dkff8q4wvsqq9i4hg0m1w1c4qw3xlr9wyv3x8dlzvpx18xdvzs";
+          rev = "a4bc0113c10c34ec9d92cde2d650eca9324144db";
+          sha256 = "0cp7b8w7jabk6hklliklaszmbjvkf84mkn4v946n9955bpqbac35";
         };
         libName = "nexus_exchange";
         dependencies = [
@@ -1830,13 +1830,13 @@ rec {
       };
       "nexus-querying" = rec {
         crateName = "nexus-querying";
-        version = "0.2.0";
+        version = "0.3.0";
         edition = "2024";
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/LiGoldragon/nexus";
-          rev = "fb3441f952ecba19dd3e9f288a39e7275f8ae700";
-          sha256 = "13dkff8q4wvsqq9i4hg0m1w1c4qw3xlr9wyv3x8dlzvpx18xdvzs";
+          rev = "a4bc0113c10c34ec9d92cde2d650eca9324144db";
+          sha256 = "0cp7b8w7jabk6hklliklaszmbjvkf84mkn4v946n9955bpqbac35";
         };
         libName = "nexus_querying";
         dependencies = [
@@ -1860,13 +1860,13 @@ rec {
       };
       "nexus-serving" = rec {
         crateName = "nexus-serving";
-        version = "0.2.0";
+        version = "0.3.0";
         edition = "2024";
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/LiGoldragon/nexus";
-          rev = "fb3441f952ecba19dd3e9f288a39e7275f8ae700";
-          sha256 = "13dkff8q4wvsqq9i4hg0m1w1c4qw3xlr9wyv3x8dlzvpx18xdvzs";
+          rev = "a4bc0113c10c34ec9d92cde2d650eca9324144db";
+          sha256 = "0cp7b8w7jabk6hklliklaszmbjvkf84mkn4v946n9955bpqbac35";
         };
         libName = "nexus_serving";
         dependencies = [
@@ -2839,13 +2839,13 @@ rec {
       };
       "signal-codex-harness-nexus" = rec {
         crateName = "signal-codex-harness-nexus";
-        version = "0.2.1";
+        version = "0.3.0";
         edition = "2024";
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/LiGoldragon/signal-codex-harness-nexus";
-          rev = "6a6fd1c53a2186689ee31e849203e7dd67f76c99";
-          sha256 = "0ig6fh7j0r2crvqc4vg2w7z4d71ilfb83yac6hl82fvbz0kqd115";
+          rev = "68dafec69a6f733cbee74a7a990b9aeffd0c4873";
+          sha256 = "17djbk3c1z7x0mhcy08j4rzy5nns6rmg3avl1y04x2nxv2fhrhgb";
         };
         libName = "signal_codex_harness_nexus";
         dependencies = [
@@ -2867,6 +2867,11 @@ rec {
             usesDefaultFeatures = false;
           }
           {
+            name = "nexus-exchange";
+            packageId = "nexus-exchange";
+            usesDefaultFeatures = false;
+          }
+          {
             name = "protos";
             packageId = "protos";
             optional = true;
@@ -2884,7 +2889,7 @@ rec {
           }
         ];
         features = {
-          "datom" = [ "dep:datom-codec" "dep:protos" "flow/datom" "harness/datom" "signal/datom" ];
+          "datom" = [ "dep:datom-codec" "dep:protos" "flow/datom" "harness/datom" "nexus-exchange/datom" "signal/datom" ];
         };
         resolvedDefaultFeatures = [ "datom" ];
       };
@@ -3455,13 +3460,13 @@ rec {
       };
       "translator-client" = rec {
         crateName = "translator-client";
-        version = "0.2.0";
+        version = "0.3.0";
         edition = "2024";
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/LiGoldragon/translator";
-          rev = "0b44de796a984e02d2ee96bdd4729bf8acd2a79b";
-          sha256 = "1f0blyal7fswcriz11iihdv7xl56rcx7ravcla1rf0m41hhafyr2";
+          rev = "2739d586e1455a001661fc85a8a61b6219aa99df";
+          sha256 = "10dhydxxhx154bnvib7rnirj826mrca8s6rqaz83z44ca3k3hvms";
         };
         libName = "translator_client";
         dependencies = [
@@ -3506,13 +3511,13 @@ rec {
       };
       "translator-serving" = rec {
         crateName = "translator-serving";
-        version = "0.2.0";
+        version = "0.3.0";
         edition = "2024";
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/LiGoldragon/translator";
-          rev = "0b44de796a984e02d2ee96bdd4729bf8acd2a79b";
-          sha256 = "1f0blyal7fswcriz11iihdv7xl56rcx7ravcla1rf0m41hhafyr2";
+          rev = "2739d586e1455a001661fc85a8a61b6219aa99df";
+          sha256 = "10dhydxxhx154bnvib7rnirj826mrca8s6rqaz83z44ca3k3hvms";
         };
         libName = "translator_serving";
         dependencies = [
@@ -3555,7 +3560,7 @@ rec {
           {
             name = "rustix";
             packageId = "rustix";
-            features = [ "rand" ];
+            features = [ "process" "rand" ];
           }
           {
             name = "signal";
@@ -3563,11 +3568,25 @@ rec {
             usesDefaultFeatures = false;
           }
           {
+            name = "tokio";
+            packageId = "tokio";
+            usesDefaultFeatures = false;
+            features = [ "macros" "net" "rt" "signal" ];
+          }
+          {
             name = "translator";
             packageId = "translator";
             rename = "shared-translator";
             usesDefaultFeatures = false;
             features = [ "unix" ];
+          }
+        ];
+        devDependencies = [
+          {
+            name = "tokio";
+            packageId = "tokio";
+            usesDefaultFeatures = false;
+            features = [ "macros" "net" "rt" "rt-multi-thread" "signal" ];
           }
         ];
         features = {

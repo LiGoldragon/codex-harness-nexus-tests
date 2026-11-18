@@ -10,15 +10,15 @@ publish = false
 [dependencies]
 harness = { package = "harness-nexus-library", git = "https://github.com/LiGoldragon/harness-nexus-library", rev = "3613d63d0994de7841bcf6f070c83bebb0ddfa5a", default-features = false }
 flow = { package = "flow-ethos", git = "https://github.com/LiGoldragon/flow", rev = "062ef9e1", default-features = false }
-codex-harness-nexus = { git = "https://github.com/LiGoldragon/codex-harness-nexus", rev = "c3ad7c4ab1cf751b169a9fb27018a8f84fd60d5e" }
-codex-harness-translator = { git = "https://github.com/LiGoldragon/codex-harness-nexus", rev = "c3ad7c4ab1cf751b169a9fb27018a8f84fd60d5e", features = ["text"] }
+codex-harness-nexus = { git = "https://github.com/LiGoldragon/codex-harness-nexus", rev = "d312b2ffec496855edbb095af63923393b03d212" }
+codex-harness-translator = { git = "https://github.com/LiGoldragon/codex-harness-nexus", rev = "d312b2ffec496855edbb095af63923393b03d212", features = ["text"] }
 signal = { git = "https://github.com/LiGoldragon/signal", rev = "4f5cbb9", default-features = false }
-signal-codex-harness-nexus = { git = "https://github.com/LiGoldragon/signal-codex-harness-nexus", rev = "6a6fd1c53a2186689ee31e849203e7dd67f76c99", default-features = false, features = ["datom"] }
+signal-codex-harness-nexus = { git = "https://github.com/LiGoldragon/signal-codex-harness-nexus", rev = "68dafec69a6f733cbee74a7a990b9aeffd0c4873", default-features = false, features = ["datom"] }
 meta-signal-codex-harness-nexus = { git = "https://github.com/LiGoldragon/meta-signal-codex-harness-nexus", rev = "b6039b70491a2b4b778af4b094c3b5782da2964e", default-features = false, features = ["datom"] }
-nexus-exchange = { git = "https://github.com/LiGoldragon/nexus", rev = "fb3441f952ecba19dd3e9f288a39e7275f8ae700", default-features = false }
+nexus-exchange = { git = "https://github.com/LiGoldragon/nexus", rev = "a4bc0113c10c34ec9d92cde2d650eca9324144db", default-features = false }
 shared-translator = { package = "translator", git = "https://github.com/LiGoldragon/translator", rev = "29601a3", default-features = false, features = ["text", "unix"] }
-translator-client = { git = "https://github.com/LiGoldragon/translator", rev = "0b44de796a984e02d2ee96bdd4729bf8acd2a79b", default-features = false, features = ["datom"] }
-translator-serving = { git = "https://github.com/LiGoldragon/translator", rev = "0b44de796a984e02d2ee96bdd4729bf8acd2a79b", default-features = false, features = ["text"] }
+translator-client = { git = "https://github.com/LiGoldragon/translator", rev = "2739d586e1455a001661fc85a8a61b6219aa99df", default-features = false, features = ["datom"] }
+translator-serving = { git = "https://github.com/LiGoldragon/translator", rev = "2739d586e1455a001661fc85a8a61b6219aa99df", default-features = false, features = ["text"] }
 notify = "8.2.0"
 nix = { version = "0.30", features = ["signal"] }
 tokio = { version = "1.53.1", default-features = false, features = ["io-util", "macros", "net", "rt", "rt-multi-thread", "signal", "sync", "time", "tracing"] }

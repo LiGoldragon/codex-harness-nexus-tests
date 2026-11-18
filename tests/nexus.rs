@@ -59,6 +59,9 @@ trait Fixtured: Sized {
     fn started(&self, path: Option<&Path>) -> Result<(), Output>;
     fn append(&self, path: &Path, text: &str);
     fn read(&self, path: &Path) -> Vec<Changed>;
+    /// Performs one operation, which the lane fails nowhere, and answers
+    /// the changes it committed.
+    fn performed(&self, operation: Operation) -> Vec<Changed>;
     fn record(&self) -> SessionRecord;
     fn text(&self, name: &str) -> String;
     /// Follows the kernel's words until `done` holds after one, and answers
@@ -187,7 +190,13 @@ impl Fixtured for Fixture {
         let Rollout::Watched(watch) = self.record().rollout else {
             panic!("the rollout at {} is not watched", path.display());
         };
-        self.nexus.perform(Operation::Reading(watch)).unwrap()
+        self.performed(Operation::Reading(watch))
+    }
+
+    fn performed(&self, operation: Operation) -> Vec<Changed> {
+        let performed = self.nexus.perform(operation).unwrap();
+        assert_eq!(performed.lane_failure_option, None);
+        performed.changed_vector
     }
 
     fn record(&self) -> SessionRecord {
@@ -353,10 +362,7 @@ fn a_named_rollout_attaches_and_its_rows_tell_the_turn() {
     fixture.append(&rollout, SESSION_META);
     fixture.append(&rollout, TASK_STARTED);
     fixture.append(&rollout, TOKEN_COUNT);
-    let changes = fixture
-        .nexus
-        .perform(Operation::Discovering(rollout_path))
-        .unwrap();
+    let changes = fixture.performed(Operation::Discovering(rollout_path));
     let Changed::Transition(context) = &changes[1] else {
         panic!("the second change is a transition: {changes:?}");
     };
@@ -409,7 +415,7 @@ fn a_row_not_yet_ended_waits_and_a_second_turn_end_is_dropped() {
     fixture.started(Some(&rollout)).unwrap();
     fixture.append(&rollout, TASK_STARTED);
     let path = FilePath(rollout.to_string_lossy().into_owned());
-    fixture.nexus.perform(Operation::Discovering(path)).unwrap();
+    fixture.performed(Operation::Discovering(path));
 
     let (head, tail) = TASK_COMPLETE_NULL.split_at(TASK_COMPLETE_NULL.len() / 2);
     fixture.append(&rollout, head);
@@ -440,12 +446,9 @@ fn a_malformed_row_is_recorded_and_read_past() {
     let rollout = fixture.path("sessions").join("rollout.jsonl");
     fixture.started(Some(&rollout)).unwrap();
     fixture.append(&rollout, "");
-    fixture
-        .nexus
-        .perform(Operation::Discovering(FilePath(
-            rollout.to_string_lossy().into_owned(),
-        )))
-        .unwrap();
+    fixture.performed(Operation::Discovering(FilePath(
+        rollout.to_string_lossy().into_owned(),
+    )));
     fixture.append(&rollout, "{not json\n");
     fixture.append(&rollout, TASK_STARTED);
     let changes = fixture.read(&rollout);
@@ -476,24 +479,18 @@ fn an_unnamed_rollout_is_found_by_its_first_row() {
         "{\"type\":\"session_meta\",\"payload\":{\"id\":\"another-session\"}}\n",
     );
     assert_eq!(
-        fixture
-            .nexus
-            .perform(Operation::Discovering(FilePath(
-                stranger.to_string_lossy().into_owned()
-            )))
-            .unwrap(),
+        fixture.performed(Operation::Discovering(FilePath(
+            stranger.to_string_lossy().into_owned()
+        ))),
         vec![]
     );
     let rollout = fixture.path("sessions").join("rollout.jsonl");
     fixture.append(&rollout, SESSION_META);
     fixture.append(&rollout, TASK_STARTED);
     assert_eq!(
-        fixture
-            .nexus
-            .perform(Operation::Discovering(FilePath(
-                rollout.to_string_lossy().into_owned()
-            )))
-            .unwrap(),
+        fixture.performed(Operation::Discovering(FilePath(
+            rollout.to_string_lossy().into_owned()
+        ))),
         vec![transition(
             Event::PromptSubmitted,
             State::Flowing(Flow::Working)
@@ -508,12 +505,9 @@ fn the_memory_outlives_the_process() {
     let rollout = fixture.path("sessions").join("rollout.jsonl");
     fixture.started(Some(&rollout)).unwrap();
     fixture.append(&rollout, TASK_STARTED);
-    fixture
-        .nexus
-        .perform(Operation::Discovering(FilePath(
-            rollout.to_string_lossy().into_owned(),
-        )))
-        .unwrap();
+    fixture.performed(Operation::Discovering(FilePath(
+        rollout.to_string_lossy().into_owned(),
+    )));
     let before = fixture.record();
     let fixture = fixture.reopened();
     assert_eq!(fixture.record(), before);
@@ -534,12 +528,9 @@ fn a_subscriber_opens_on_the_state_and_follows_each_change() {
         panic!("a configured Nexus is subscribed to");
     };
     fixture.append(&rollout, TASK_STARTED);
-    fixture
-        .nexus
-        .perform(Operation::Discovering(FilePath(
-            rollout.to_string_lossy().into_owned(),
-        )))
-        .unwrap();
+    fixture.performed(Operation::Discovering(FilePath(
+        rollout.to_string_lossy().into_owned(),
+    )));
     let runtime = tokio::runtime::Builder::new_current_thread()
         .build()
         .unwrap();
@@ -575,7 +566,7 @@ fn the_kernel_names_a_rollout_written_in_a_nested_sessions_directory() {
     let operations = fixture.nexus.woken(written).unwrap();
     assert_eq!(operations, vec![Operation::Discovering(path.clone())]);
     for operation in operations {
-        fixture.nexus.perform(operation).unwrap();
+        fixture.performed(operation);
     }
     assert!(matches!(fixture.record().rollout, Rollout::Watched(_)));
     assert_eq!(

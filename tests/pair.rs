@@ -8,7 +8,9 @@
 //! holds `codex-harness-pair` and both CLIs.
 //!
 //! Every wait is on an event: a socket appearing, an answer, a process
-//! ending. Each has a deadline, past which the test fails.
+//! ending. Each has a deadline, past which the test fails. A subscription,
+//! public or meta, stays open, and its answers are read one by one as the
+//! CLI writes them.
 
 use std::fs;
 use std::io::{BufRead as _, BufReader};
@@ -18,11 +20,11 @@ use std::process::{Child, Command, Stdio};
 use std::sync::mpsc::{Receiver, channel};
 use std::time::Duration;
 
-use codex_harness_nexus::{CodexHarness, MemoryPlacing as _};
+use codex_harness_nexus::CodexHarness;
 use flow::FlowId;
 use harness::{Event, FilePath, Flow, Observed, State, Tokens};
 use meta_signal_codex_harness_nexus as meta;
-use nexus_exchange::SocketPaths;
+use nexus_exchange::{MemoryPlacing as _, SocketPaths};
 use nix::sys::signal::{Signal as ProcessSignal, kill};
 use nix::unistd::Pid;
 use notify::{RecursiveMode, Watcher as _};
@@ -56,7 +58,7 @@ const TASK_COMPLETE: &str = include_str!("../fixtures/task-complete-response-syn
 const PRODUCER: &str = "#!/bin/sh\n[ \"$1\" = codex ] && [ \"$2\" = --flows-root ] && [ \"$CODEX_SESSION_ID\" = 01a1e4cb-c2d2-7d91-86ea-0b4c85ce34be ] || exit 2\necho 4c85ce\n";
 
 /// An answer read back from a CLI's text.
-trait Decoded: Sized {
+trait Decoded: Sized + Send + 'static {
     fn decoded(text: &str) -> Option<Self>;
 }
 
@@ -219,8 +221,13 @@ trait Pairing: Sized {
     /// A public request answered once, or the CLI's error when it is not
     /// answered.
     fn ask(&self, input: Input) -> Result<Output, String>;
-    fn subscribe(&self) -> Subscription;
-    /// The configuration as the meta socket reads it out.
+    /// A subscription through the CLI `executable`, given `input` as its
+    /// datom, and its answers as they come.
+    fn following<Answer: Decoded>(&self, executable: &str, input: String) -> Subscription<Answer>;
+    fn subscribe(&self) -> Subscription<Output>;
+    /// The configuration's meta subscription, which stays open.
+    fn meta_subscribe(&self) -> Subscription<meta::Output>;
+    /// The configuration as the meta socket opens a subscription on it.
     fn readout(&self) -> meta::ConfigurationReadout;
     /// Sets each of the Nexus's settings, checking each answer.
     fn configured(&self);
@@ -316,13 +323,13 @@ impl Pairing for Pair {
         Ok(Output::decoded(&text).unwrap_or_else(|| panic!("a public answer: {text}")))
     }
 
-    fn subscribe(&self) -> Subscription {
-        let mut child = Command::new(Self::executable("codex-harness"))
-            .arg(shared_translator::encode(&Input::Subscribe))
+    fn following<Answer: Decoded>(&self, executable: &str, input: String) -> Subscription<Answer> {
+        let mut child = Command::new(Self::executable(executable))
+            .arg(input)
             .envs(self.scratch.environment())
             .stdout(Stdio::piped())
             .spawn()
-            .expect("the public CLI subscribes");
+            .expect("the CLI subscribes");
         let stdout = child.stdout.take().expect("the subscription's output");
         let (answered, answers) = channel();
         // An answer may span lines; the lines read since the last answer
@@ -333,7 +340,7 @@ impl Pairing for Pair {
                 let Ok(line) = line else { return };
                 text.push_str(&line);
                 text.push('\n');
-                if let Some(answer) = Output::decoded(&text) {
+                if let Some(answer) = Answer::decoded(&text) {
                     text.clear();
                     if answered.send(answer).is_err() {
                         return;
@@ -344,8 +351,22 @@ impl Pairing for Pair {
         Subscription { child, answers }
     }
 
+    fn subscribe(&self) -> Subscription<Output> {
+        self.following(
+            "codex-harness",
+            shared_translator::encode(&Input::Subscribe),
+        )
+    }
+
+    fn meta_subscribe(&self) -> Subscription<meta::Output> {
+        self.following(
+            "codex-harness-meta",
+            shared_translator::encode(&meta::Input::Subscribe),
+        )
+    }
+
     fn readout(&self) -> meta::ConfigurationReadout {
-        match self.meta(meta::Input::Subscribe) {
+        match self.meta_subscribe().next() {
             meta::Output::Subscribed(Frame::Opened(readout)) => readout,
             other => panic!("the configuration is read back: {other:?}"),
         }
@@ -394,25 +415,25 @@ impl Drop for Pair {
     }
 }
 
-/// A public subscription through the CLI, and its answers as they come.
-struct Subscription {
+/// A subscription through a CLI, and its answers as they come.
+struct Subscription<Answer> {
     child: Child,
-    answers: Receiver<Output>,
+    answers: Receiver<Answer>,
 }
 
-trait Following {
-    fn next(&self) -> Output;
+trait Following<Answer> {
+    fn next(&self) -> Answer;
 }
 
-impl Following for Subscription {
-    fn next(&self) -> Output {
+impl<Answer> Following<Answer> for Subscription<Answer> {
+    fn next(&self) -> Answer {
         self.answers
             .recv_timeout(DEADLINE)
             .expect("the subscription answers")
     }
 }
 
-impl Drop for Subscription {
+impl<Answer> Drop for Subscription<Answer> {
     fn drop(&mut self) {
         let _ = self.child.kill();
         let _ = self.child.wait();
@@ -446,7 +467,7 @@ trait Turning {
     fn turn(&self) -> Vec<(Event, State)>;
 }
 
-impl Turning for Subscription {
+impl Turning for Subscription<Output> {
     fn turn(&self) -> Vec<(Event, State)> {
         let mut transitions = vec![];
         while !matches!(transitions.last(), Some((Event::TurnEnded, _))) {
@@ -572,6 +593,16 @@ fn an_invalid_setting_is_refused_typed_and_never_kept() {
             meta::Output::ConfigureRefused(refusal)
         );
     }
+    assert_eq!(
+        pair.meta(meta::Input::Subscribe),
+        meta::Output::ConfigureRefused(meta::ConfigurationRefusal::CapacityUnset),
+        "no refused capacity is kept, and a subscription needs one"
+    );
+    let capacity = meta::Set::SubscriberCapacity(meta::Capacity(16));
+    assert_eq!(
+        pair.meta(meta::Input::Configure(capacity.clone())),
+        meta::Output::Configured(capacity)
+    );
     let configuration = pair.readout().configuration;
     assert_eq!(
         configuration,
@@ -581,7 +612,7 @@ fn an_invalid_setting_is_refused_typed_and_never_kept() {
             identity_producer_option: None,
             sessions_directories_option: None,
             thread_databases_option: None,
-            capacity_option: None,
+            capacity_option: Some(meta::Capacity(16)),
         },
         "no refused value is kept"
     );
@@ -625,6 +656,7 @@ fn the_text_budget_is_answered_by_the_translator_and_bounds_its_reading() {
 #[test]
 fn the_configuration_readout_shows_the_translators_text_budget() {
     let pair = Pair::started();
+    pair.configured();
     let budget = meta::TextBudget {
         node_limit: meta::NodeLimit(1024),
         depth_limit: meta::DepthLimit(32),
@@ -848,12 +880,77 @@ fn a_sessions_directory_removed_and_made_anew_is_watched_again() {
 }
 
 #[test]
+fn an_open_meta_subscription_carries_each_change_of_the_translator_and_the_nexus() {
+    let pair = Pair::started();
+    pair.configured();
+    let subscription = pair.meta_subscribe();
+    let meta::Output::Subscribed(Frame::Opened(readout)) = subscription.next() else {
+        panic!("the meta subscription opens on the readout");
+    };
+    assert!(
+        readout.configuration.text_budget_option.is_some(),
+        "it opens with the translator's text budget"
+    );
+    assert_eq!(
+        readout.awaited_directories,
+        meta::AwaitedDirectories(vec![])
+    );
+    // The translator's own setting, set on the meta socket while the
+    // subscription is open.
+    let budget = meta::Set::TextBudget(meta::TextBudget {
+        node_limit: meta::NodeLimit(1024),
+        depth_limit: meta::DepthLimit(32),
+    });
+    assert_eq!(
+        pair.meta(meta::Input::Configure(budget.clone())),
+        meta::Output::Configured(budget.clone())
+    );
+    assert_eq!(
+        subscription.next(),
+        meta::Output::Subscribed(Frame::Changed(meta::ConfigurationChange::Set(budget))),
+        "the translator's text budget reaches the open subscription"
+    );
+    // A Nexus setting: sessions directories not yet there.
+    let later = pair.scratch.path("later/sessions");
+    let directories = meta::Set::SessionsDirectories(meta::SessionsDirectories(vec![FilePath(
+        later.to_string_lossy().into_owned(),
+    )]));
+    assert_eq!(
+        pair.meta(meta::Input::Configure(directories.clone())),
+        meta::Output::Configured(directories.clone())
+    );
+    assert_eq!(
+        subscription.next(),
+        meta::Output::Subscribed(Frame::Changed(meta::ConfigurationChange::Set(directories))),
+        "the Nexus's setting reaches the open subscription"
+    );
+    assert_eq!(
+        subscription.next(),
+        meta::Output::Subscribed(Frame::Changed(
+            meta::ConfigurationChange::AwaitedDirectories(meta::AwaitedDirectories(vec![
+                FilePath(later.to_string_lossy().into_owned())
+            ]))
+        )),
+        "the directory not yet there is awaited"
+    );
+    fs::create_dir_all(&later).expect("the sessions directory made");
+    assert_eq!(
+        subscription.next(),
+        meta::Output::Subscribed(Frame::Changed(
+            meta::ConfigurationChange::AwaitedDirectories(meta::AwaitedDirectories(vec![]))
+        )),
+        "once it is there, it is awaited no more"
+    );
+    drop(subscription);
+    pair.end(Member::Nexus);
+}
+
+#[test]
 fn the_pair_ends_together_and_is_reaped() {
     Pair::started().end(Member::Translator);
 }
 
 #[test]
-#[ignore = "translator-serving 0.2.0's pair launcher does not handle SIGTERM: ended so, it leaves the daemon and the translator running, until the shared release f40y"]
 fn a_launcher_ended_by_sigterm_ends_its_pair() {
     let mut pair = Pair::started();
     kill(
@@ -861,7 +958,12 @@ fn a_launcher_ended_by_sigterm_ends_its_pair() {
         ProcessSignal::SIGTERM,
     )
     .expect("the launcher is signalled");
-    pair.launcher.wait().expect("the launcher ends");
+    let status = pair.launcher.wait().expect("the launcher ends");
+    pair.ended = true;
+    assert!(
+        !status.success(),
+        "the launcher ends in an error naming the signal: {status:?}"
+    );
     for (name, pid) in [("daemon", pair.nexus), ("translator", pair.translator)] {
         assert!(
             !Path::new(&format!("/proc/{pid}")).exists(),

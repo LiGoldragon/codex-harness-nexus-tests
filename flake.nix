@@ -4,7 +4,7 @@
   # The Nexus whose pair the tests run, at the revision its crates are
   # taken at through Cargo, built on this base.
   inputs.codex-harness-nexus = {
-    url = "github:LiGoldragon/codex-harness-nexus/c3ad7c4ab1cf751b169a9fb27018a8f84fd60d5e";
+    url = "github:LiGoldragon/codex-harness-nexus/d312b2ffec496855edbb095af63923393b03d212";
     inputs.base.follows = "base";
   };
   outputs =
