@@ -1,9 +1,11 @@
 //! The Codex Harness Nexus as it is deployed: its pair launcher starts the
 //! daemon and its translator in a scratch place whose runtime and state are
 //! the test's own, and every exchange goes through the two CLIs,
-//! `codex-harness` and `codex-harness-meta`, each given `<place-name>
-//! '<datom>'`. The package is the one the `CODEX_HARNESS_NEXUS` variable
-//! names; its `bin` holds `codex-harness-pair` and both CLIs.
+//! `codex-harness` and `codex-harness-meta`, each given its datom alone and
+//! reading its place from the configuration file the shared client names,
+//! `nexus/codex-harness.datom` under the scratch configuration home. The
+//! package is the one the `CODEX_HARNESS_NEXUS` variable names; its `bin`
+//! holds `codex-harness-pair` and both CLIs.
 //!
 //! Every wait is on an event: a socket appearing, an answer, a process
 //! ending. Each has a deadline, past which the test fails.
@@ -29,11 +31,15 @@ use signal::Frame;
 use signal_codex_harness_nexus::{
     Changed, Hook, Input, Observations, Output, ReportFailure, SessionStart_Data,
 };
+use translator_client::{
+    ClientConfiguration, ConfigurationFile, ConfigurationLocating as _, ConfigurationPath,
+    ConfigurationRefusal,
+};
 use translator_serving::{Budgeting as _, ValidTextBudget};
 
 /// The variable naming the package the pair is started from.
 const PACKAGE: &str = "CODEX_HARNESS_NEXUS";
-/// The name of the scratch place, as the CLIs are given it.
+/// The name of the scratch place, as the CLIs' configuration names it.
 const PLACE_NAME: &str = "alpha";
 /// The longest any one event is waited for.
 const DEADLINE: Duration = Duration::from_secs(60);
@@ -66,9 +72,16 @@ impl Decoded for Output {
     }
 }
 
+impl Decoded for ConfigurationRefusal {
+    fn decoded(text: &str) -> Option<Self> {
+        shared_translator::decode(text.trim(), &mut ValidTextBudget::MAXIMUM.budget()).ok()
+    }
+}
+
 /// The test's own directory: the place's runtime and state, the private
-/// home the processes see, the flows root, the sessions directory, the
-/// identity producer, and a staging directory beside the sessions.
+/// home the processes see, the configuration home whose file names the
+/// place to the CLIs, the flows root, the sessions directory, the identity
+/// producer, and a staging directory beside the sessions.
 struct Scratch {
     directory: tempfile::TempDir,
 }
@@ -78,6 +91,9 @@ trait Scratching: Sized {
     fn path(&self, relative: &str) -> PathBuf;
     fn text(&self, relative: &str) -> String;
     fn place(&self) -> Place;
+    /// The file the CLIs read their place from, as the shared client names
+    /// it under the scratch configuration home.
+    fn configuration_file(&self) -> ConfigurationFile;
     /// The variables every process of the pair and every CLI is run with,
     /// so the place's name resolves inside the scratch directory.
     fn environment(&self) -> Vec<(&'static str, PathBuf)>;
@@ -105,6 +121,21 @@ impl Scratching for Scratch {
         ] {
             fs::create_dir_all(directory).expect("scratch subdirectory");
         }
+        let configuration = scratch.configuration_file();
+        fs::create_dir_all(
+            configuration
+                .path
+                .parent()
+                .expect("the configuration's directory"),
+        )
+        .expect("the configuration directory");
+        fs::write(
+            &configuration.path,
+            shared_translator::encode(&ClientConfiguration {
+                place_name: PlaceName(PLACE_NAME.into()),
+            }),
+        )
+        .expect("the CLIs' configuration names the scratch place");
         let producer = scratch.path("flow-id");
         fs::write(&producer, PRODUCER).expect("identity producer");
         fs::set_permissions(&producer, fs::Permissions::from_mode(0o755))
@@ -128,8 +159,14 @@ impl Scratching for Scratch {
         }
     }
 
+    fn configuration_file(&self) -> ConfigurationFile {
+        ConfigurationFile::under::<CodexHarness>(Some(self.path("config").as_os_str()), None)
+            .expect("the scratch configuration home is absolute")
+    }
+
     fn environment(&self) -> Vec<(&'static str, PathBuf)> {
         vec![
+            ("XDG_CONFIG_HOME", self.path("config")),
             ("XDG_RUNTIME_DIR", self.path("run")),
             ("XDG_STATE_HOME", self.path("state")),
             ("HOME", self.path("home")),
@@ -253,7 +290,6 @@ impl Pairing for Pair {
 
     fn meta(&self, input: meta::Input) -> meta::Output {
         let output = Command::new(Self::executable("codex-harness-meta"))
-            .arg(PLACE_NAME)
             .arg(shared_translator::encode(&input))
             .envs(self.scratch.environment())
             .output()
@@ -269,7 +305,6 @@ impl Pairing for Pair {
 
     fn ask(&self, input: Input) -> Result<Output, String> {
         let output = Command::new(Self::executable("codex-harness"))
-            .arg(PLACE_NAME)
             .arg(shared_translator::encode(&input))
             .envs(self.scratch.environment())
             .output()
@@ -283,7 +318,6 @@ impl Pairing for Pair {
 
     fn subscribe(&self) -> Subscription {
         let mut child = Command::new(Self::executable("codex-harness"))
-            .arg(PLACE_NAME)
             .arg(shared_translator::encode(&Input::Subscribe))
             .envs(self.scratch.environment())
             .stdout(Stdio::piped())
@@ -476,11 +510,15 @@ fn the_public_socket_opens_only_once_the_configuration_is_ready() {
         "a sessions directory there is not awaited"
     );
     let configuration = readout.configuration;
+    assert!(
+        configuration.text_budget_option.is_some(),
+        "the readout carries the translator's text budget, the bootstrap's to start"
+    );
     assert_eq!(
         configuration,
         meta::Configuration {
-            // The text budget is the translator's; this readout does not
-            // carry it yet (see the ignored test below).
+            // The text budget is the translator's, which the next test
+            // reads back once set.
             text_budget_option: configuration.text_budget_option.clone(),
             flows_root_option: Some(meta::FlowsRoot(pair.scratch.text("flows"))),
             identity_producer_option: Some(meta::IdentityProducer(pair.scratch.text("flow-id"))),
@@ -585,7 +623,6 @@ fn the_text_budget_is_answered_by_the_translator_and_bounds_its_reading() {
 }
 
 #[test]
-#[ignore = "translator-serving 0.1.1's meta_answered has no &self, so a forwarded Configuration readout carries the text budget as None until the shared release fixes it"]
 fn the_configuration_readout_shows_the_translators_text_budget() {
     let pair = Pair::started();
     let budget = meta::TextBudget {
@@ -816,7 +853,7 @@ fn the_pair_ends_together_and_is_reaped() {
 }
 
 #[test]
-#[ignore = "translator-serving 0.1.1's pair launcher does not handle SIGTERM: ended so, it leaves the daemon and the translator running"]
+#[ignore = "translator-serving 0.2.0's pair launcher does not handle SIGTERM: ended so, it leaves the daemon and the translator running, until the shared release f40y"]
 fn a_launcher_ended_by_sigterm_ends_its_pair() {
     let mut pair = Pair::started();
     kill(
@@ -829,6 +866,40 @@ fn a_launcher_ended_by_sigterm_ends_its_pair() {
         assert!(
             !Path::new(&format!("/proc/{pid}")).exists(),
             "the {name} ends with its launcher"
+        );
+    }
+}
+
+#[test]
+fn a_cli_with_no_configuration_file_is_refused_missing_and_sends_nothing() {
+    let scratch = Scratch::made();
+    let configuration = scratch.configuration_file();
+    fs::remove_file(&configuration.path).expect("the configuration removed");
+    for (executable, input) in [
+        ("codex-harness", shared_translator::encode(&session_start())),
+        (
+            "codex-harness-meta",
+            shared_translator::encode(&meta::Input::Subscribe),
+        ),
+    ] {
+        let output = Command::new(Pair::executable(executable))
+            .arg(input)
+            .envs(scratch.environment())
+            .output()
+            .expect("the CLI runs");
+        assert_eq!(
+            output.status.code(),
+            Some(2),
+            "{executable} exits 2 when it has no configuration"
+        );
+        assert!(output.stdout.is_empty(), "{executable} answers nothing");
+        let refusal = String::from_utf8_lossy(&output.stderr);
+        assert_eq!(
+            ConfigurationRefusal::decoded(&refusal),
+            Some(ConfigurationRefusal::Missing(ConfigurationPath(
+                configuration.path.to_string_lossy().into_owned()
+            ))),
+            "{executable} names the file it found missing: {refusal}"
         );
     }
 }

@@ -93,7 +93,7 @@ checksum = "f079e83a288787bcd14a6aea84cee5c87a67c5a3e660c30f557a3d24761b3527"
 [[package]]
 name = "codex-harness-nexus"
 version = "0.1.0"
-source = "git+https://github.com/LiGoldragon/codex-harness-nexus?rev=e178db0a559f9740e16b3d70ac40d46a6ae4166b#e178db0a559f9740e16b3d70ac40d46a6ae4166b"
+source = "git+https://github.com/LiGoldragon/codex-harness-nexus?rev=c3ad7c4ab1cf751b169a9fb27018a8f84fd60d5e#c3ad7c4ab1cf751b169a9fb27018a8f84fd60d5e"
 dependencies = [
  "datom-codec",
  "flow-ethos",
@@ -132,13 +132,14 @@ dependencies = [
  "tempfile",
  "tokio",
  "translator",
+ "translator-client",
  "translator-serving",
 ]
 
 [[package]]
 name = "codex-harness-translator"
 version = "0.1.0"
-source = "git+https://github.com/LiGoldragon/codex-harness-nexus?rev=e178db0a559f9740e16b3d70ac40d46a6ae4166b#e178db0a559f9740e16b3d70ac40d46a6ae4166b"
+source = "git+https://github.com/LiGoldragon/codex-harness-nexus?rev=c3ad7c4ab1cf751b169a9fb27018a8f84fd60d5e#c3ad7c4ab1cf751b169a9fb27018a8f84fd60d5e"
 dependencies = [
  "codex-harness-nexus",
  "datom-codec",
@@ -148,6 +149,7 @@ dependencies = [
  "protos",
  "rkyv",
  "serde_json",
+ "signal",
  "signal-codex-harness-nexus",
  "translator",
  "translator-client",
@@ -536,8 +538,8 @@ dependencies = [
 
 [[package]]
 name = "nexus-exchange"
-version = "0.1.1"
-source = "git+https://github.com/LiGoldragon/nexus?rev=63a2d477ca194913c847d15f227637d84fbe9aeb#63a2d477ca194913c847d15f227637d84fbe9aeb"
+version = "0.2.0"
+source = "git+https://github.com/LiGoldragon/nexus?rev=fb3441f952ecba19dd3e9f288a39e7275f8ae700#fb3441f952ecba19dd3e9f288a39e7275f8ae700"
 dependencies = [
  "datom-codec",
  "protos",
@@ -548,8 +550,8 @@ dependencies = [
 
 [[package]]
 name = "nexus-querying"
-version = "0.1.1"
-source = "git+https://github.com/LiGoldragon/nexus?rev=63a2d477ca194913c847d15f227637d84fbe9aeb#63a2d477ca194913c847d15f227637d84fbe9aeb"
+version = "0.2.0"
+source = "git+https://github.com/LiGoldragon/nexus?rev=fb3441f952ecba19dd3e9f288a39e7275f8ae700#fb3441f952ecba19dd3e9f288a39e7275f8ae700"
 dependencies = [
  "nexus-exchange",
  "rkyv",
@@ -558,8 +560,8 @@ dependencies = [
 
 [[package]]
 name = "nexus-serving"
-version = "0.1.1"
-source = "git+https://github.com/LiGoldragon/nexus?rev=63a2d477ca194913c847d15f227637d84fbe9aeb#63a2d477ca194913c847d15f227637d84fbe9aeb"
+version = "0.2.0"
+source = "git+https://github.com/LiGoldragon/nexus?rev=fb3441f952ecba19dd3e9f288a39e7275f8ae700#fb3441f952ecba19dd3e9f288a39e7275f8ae700"
 dependencies = [
  "futures-channel",
  "futures-util",
@@ -1018,10 +1020,12 @@ dependencies = [
 
 [[package]]
 name = "translator-client"
-version = "0.1.1"
-source = "git+https://github.com/LiGoldragon/translator?rev=8e744a4503f13dd748e7e222f5f7aa5443b28961#8e744a4503f13dd748e7e222f5f7aa5443b28961"
+version = "0.2.0"
+source = "git+https://github.com/LiGoldragon/translator?rev=0b44de796a984e02d2ee96bdd4729bf8acd2a79b#0b44de796a984e02d2ee96bdd4729bf8acd2a79b"
 dependencies = [
+ "datom-codec",
  "nexus-exchange",
+ "protos",
  "rkyv",
  "signal",
  "translator",
@@ -1029,8 +1033,8 @@ dependencies = [
 
 [[package]]
 name = "translator-serving"
-version = "0.1.1"
-source = "git+https://github.com/LiGoldragon/translator?rev=8e744a4503f13dd748e7e222f5f7aa5443b28961#8e744a4503f13dd748e7e222f5f7aa5443b28961"
+version = "0.2.0"
+source = "git+https://github.com/LiGoldragon/translator?rev=0b44de796a984e02d2ee96bdd4729bf8acd2a79b#0b44de796a984e02d2ee96bdd4729bf8acd2a79b"
 dependencies = [
  "datom-codec",
  "nexus-exchange",
@@ -1039,6 +1043,7 @@ dependencies = [
  "nix",
  "protos",
  "rkyv",
+ "rustix",
  "signal",
  "translator",
 ]

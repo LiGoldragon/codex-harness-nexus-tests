@@ -330,8 +330,8 @@ rec {
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/LiGoldragon/codex-harness-nexus";
-          rev = "e178db0a559f9740e16b3d70ac40d46a6ae4166b";
-          sha256 = "0alqmrxwv3ikpn0gig1bb0z8r9l7sw4mpnpb12dwr9rchqn1x393";
+          rev = "c3ad7c4ab1cf751b169a9fb27018a8f84fd60d5e";
+          sha256 = "0znblacqyilb5qa145qgx0jlakv59qxszi32ipx9pphpmzgr65ya";
         };
         libName = "codex_harness_nexus";
         dependencies = [
@@ -515,6 +515,12 @@ rec {
             features = [ "text" "unix" ];
           }
           {
+            name = "translator-client";
+            packageId = "translator-client";
+            usesDefaultFeatures = false;
+            features = [ "datom" ];
+          }
+          {
             name = "translator-serving";
             packageId = "translator-serving";
             usesDefaultFeatures = false;
@@ -531,8 +537,8 @@ rec {
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/LiGoldragon/codex-harness-nexus";
-          rev = "e178db0a559f9740e16b3d70ac40d46a6ae4166b";
-          sha256 = "0alqmrxwv3ikpn0gig1bb0z8r9l7sw4mpnpb12dwr9rchqn1x393";
+          rev = "c3ad7c4ab1cf751b169a9fb27018a8f84fd60d5e";
+          sha256 = "0znblacqyilb5qa145qgx0jlakv59qxszi32ipx9pphpmzgr65ya";
         };
         libName = "codex_harness_translator";
         dependencies = [
@@ -578,6 +584,11 @@ rec {
             packageId = "serde_json";
           }
           {
+            name = "signal";
+            packageId = "signal";
+            usesDefaultFeatures = false;
+          }
+          {
             name = "signal-codex-harness-nexus";
             packageId = "signal-codex-harness-nexus";
             usesDefaultFeatures = false;
@@ -602,7 +613,7 @@ rec {
         ];
         features = {
           "datom" = [ "dep:datom-codec" "dep:protos" "codex-harness-nexus/datom" "harness/datom" "flow/datom" "signal-codex-harness-nexus/datom" ];
-          "text" = [ "datom" "meta-signal-codex-harness-nexus/datom" "shared-translator/text" "translator-serving/text" ];
+          "text" = [ "datom" "meta-signal-codex-harness-nexus/datom" "shared-translator/text" "translator-client/datom" "translator-serving/text" ];
         };
         resolvedDefaultFeatures = [ "datom" "default" "text" ];
       };
@@ -1773,13 +1784,13 @@ rec {
       };
       "nexus-exchange" = rec {
         crateName = "nexus-exchange";
-        version = "0.1.1";
+        version = "0.2.0";
         edition = "2024";
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/LiGoldragon/nexus";
-          rev = "63a2d477ca194913c847d15f227637d84fbe9aeb";
-          sha256 = "09xh9bps4i0yzcwj3ly4skzwk40pi50xga66032fd2cz9lq66b9p";
+          rev = "fb3441f952ecba19dd3e9f288a39e7275f8ae700";
+          sha256 = "13dkff8q4wvsqq9i4hg0m1w1c4qw3xlr9wyv3x8dlzvpx18xdvzs";
         };
         libName = "nexus_exchange";
         dependencies = [
@@ -1819,13 +1830,13 @@ rec {
       };
       "nexus-querying" = rec {
         crateName = "nexus-querying";
-        version = "0.1.1";
+        version = "0.2.0";
         edition = "2024";
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/LiGoldragon/nexus";
-          rev = "63a2d477ca194913c847d15f227637d84fbe9aeb";
-          sha256 = "09xh9bps4i0yzcwj3ly4skzwk40pi50xga66032fd2cz9lq66b9p";
+          rev = "fb3441f952ecba19dd3e9f288a39e7275f8ae700";
+          sha256 = "13dkff8q4wvsqq9i4hg0m1w1c4qw3xlr9wyv3x8dlzvpx18xdvzs";
         };
         libName = "nexus_querying";
         dependencies = [
@@ -1849,13 +1860,13 @@ rec {
       };
       "nexus-serving" = rec {
         crateName = "nexus-serving";
-        version = "0.1.1";
+        version = "0.2.0";
         edition = "2024";
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/LiGoldragon/nexus";
-          rev = "63a2d477ca194913c847d15f227637d84fbe9aeb";
-          sha256 = "09xh9bps4i0yzcwj3ly4skzwk40pi50xga66032fd2cz9lq66b9p";
+          rev = "fb3441f952ecba19dd3e9f288a39e7275f8ae700";
+          sha256 = "13dkff8q4wvsqq9i4hg0m1w1c4qw3xlr9wyv3x8dlzvpx18xdvzs";
         };
         libName = "nexus_serving";
         dependencies = [
@@ -2592,7 +2603,7 @@ rec {
           "thread" = [ "linux-raw-sys/prctl" ];
           "use-libc" = [ "libc_errno" "libc" ];
         };
-        resolvedDefaultFeatures = [ "alloc" "default" "fs" "process" "std" ];
+        resolvedDefaultFeatures = [ "alloc" "default" "fs" "process" "rand" "std" ];
       };
       "rustversion" = rec {
         crateName = "rustversion";
@@ -3444,20 +3455,30 @@ rec {
       };
       "translator-client" = rec {
         crateName = "translator-client";
-        version = "0.1.1";
+        version = "0.2.0";
         edition = "2024";
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/LiGoldragon/translator";
-          rev = "8e744a4503f13dd748e7e222f5f7aa5443b28961";
-          sha256 = "0nkkipr4nqs1w5sj8g8a3y1a7dqg562x7di1k7hh1h98spvq8c2g";
+          rev = "0b44de796a984e02d2ee96bdd4729bf8acd2a79b";
+          sha256 = "1f0blyal7fswcriz11iihdv7xl56rcx7ravcla1rf0m41hhafyr2";
         };
         libName = "translator_client";
         dependencies = [
           {
+            name = "datom-codec";
+            packageId = "datom-codec";
+            optional = true;
+          }
+          {
             name = "nexus-exchange";
             packageId = "nexus-exchange";
             usesDefaultFeatures = false;
+          }
+          {
+            name = "protos";
+            packageId = "protos";
+            optional = true;
           }
           {
             name = "rkyv";
@@ -3479,18 +3500,19 @@ rec {
           }
         ];
         features = {
-          "datom" = [ "dep:datom-codec" "dep:protos" "nexus-exchange/datom" ];
+          "datom" = [ "dep:datom-codec" "dep:protos" "nexus-exchange/datom" "shared-translator/datom" ];
         };
+        resolvedDefaultFeatures = [ "datom" ];
       };
       "translator-serving" = rec {
         crateName = "translator-serving";
-        version = "0.1.1";
+        version = "0.2.0";
         edition = "2024";
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/LiGoldragon/translator";
-          rev = "8e744a4503f13dd748e7e222f5f7aa5443b28961";
-          sha256 = "0nkkipr4nqs1w5sj8g8a3y1a7dqg562x7di1k7hh1h98spvq8c2g";
+          rev = "0b44de796a984e02d2ee96bdd4729bf8acd2a79b";
+          sha256 = "1f0blyal7fswcriz11iihdv7xl56rcx7ravcla1rf0m41hhafyr2";
         };
         libName = "translator_serving";
         dependencies = [
@@ -3529,6 +3551,11 @@ rec {
             packageId = "rkyv";
             usesDefaultFeatures = false;
             features = [ "std" "bytecheck" "little_endian" "pointer_width_32" "unaligned" ];
+          }
+          {
+            name = "rustix";
+            packageId = "rustix";
+            features = [ "rand" ];
           }
           {
             name = "signal";
