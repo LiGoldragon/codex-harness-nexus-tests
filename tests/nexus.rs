@@ -446,3 +446,42 @@ fn a_subscriber_opens_on_the_state_and_follows_each_change() {
         )))
     );
 }
+
+#[test]
+fn the_kernel_names_a_rollout_written_in_a_nested_sessions_directory() {
+    use codex_harness_nexus::{Awaiting, Waking, Watcher};
+    let fixture = Fixture::fixture(PRODUCER);
+    fixture.configure();
+    let day = fixture.path("sessions").join("2026").join("11");
+    fs::create_dir_all(&day).unwrap();
+    let rollout = day.join("rollout.jsonl");
+    fixture.started(Some(&rollout)).unwrap();
+    let watcher = Watcher::open(vec![FilePath(
+        fixture.path("sessions").to_string_lossy().into_owned(),
+    )])
+    .unwrap();
+    fixture.append(&rollout, TASK_STARTED);
+    let path = FilePath(rollout.to_string_lossy().into_owned());
+    let mut written = vec![];
+    while !written.contains(&path) {
+        written.extend(watcher.written().unwrap());
+    }
+    let operations = fixture.nexus.woken(written).unwrap();
+    assert_eq!(operations, vec![Operation::Discovering(path.clone())]);
+    for operation in operations {
+        fixture.nexus.perform(operation).unwrap();
+    }
+    assert!(matches!(fixture.record().rollout, Rollout::Watched(_)));
+    assert_eq!(
+        fixture.nexus.woken(vec![path]).unwrap(),
+        match fixture.record().rollout {
+            Rollout::Watched(watch) => vec![Operation::Reading(watch)],
+            rollout => panic!("watched: {rollout:?}"),
+        }
+    );
+    assert_eq!(
+        fixture.nexus.startup().unwrap().len(),
+        1,
+        "one look at startup reads the watched rollout"
+    );
+}

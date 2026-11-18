@@ -1,6 +1,6 @@
 {
-  "git+https://github.com/LiGoldragon/codex-harness-nexus?rev=c47614267751e34695fa6ccee9a73ec91be769b9#0.1.0": "1xxkjrb15igvccvgh2m28ga3vf7i11hxg8n62i8sd8chqzk4wy41",
-  "git+https://github.com/LiGoldragon/codex-harness-nexus?rev=c47614267751e34695fa6ccee9a73ec91be769b9#codex-harness-translator@0.1.0": "1xxkjrb15igvccvgh2m28ga3vf7i11hxg8n62i8sd8chqzk4wy41",
+  "git+https://github.com/LiGoldragon/codex-harness-nexus?rev=88daba6b924581f057630ce957a242c279a73262#0.1.0": "1i0z02h5bsfywif3s7q0j33zskg9sj7lnd0jv4kp69zjm2i1iykg",
+  "git+https://github.com/LiGoldragon/codex-harness-nexus?rev=88daba6b924581f057630ce957a242c279a73262#codex-harness-translator@0.1.0": "1i0z02h5bsfywif3s7q0j33zskg9sj7lnd0jv4kp69zjm2i1iykg",
   "git+https://github.com/LiGoldragon/datom-codec?rev=09a0526#0.33.1": "18cplyk9f5nrqs35fgqpimfi507l38qvkmkx3z2qm2vwi1rlii2d",
   "git+https://github.com/LiGoldragon/datom-codec?rev=09a0526#datom-codec-derive@0.32.3": "18cplyk9f5nrqs35fgqpimfi507l38qvkmkx3z2qm2vwi1rlii2d",
   "git+https://github.com/LiGoldragon/ethos-zero?rev=1976e45#22.0.0": "12b6np5n8knlpv2rb98g0m04n6xxaprd8n5hy4wgw658h5vg216j",
