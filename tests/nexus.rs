@@ -7,12 +7,12 @@ use std::fs::{self, OpenOptions};
 use std::io::Write;
 use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
-use std::sync::Mutex;
+use std::sync::{Mutex, RwLock};
 
 use codex_harness_nexus::{
     HarnessNexus, Opening, Operation, Performing, Remembering, Rollout, SessionRecord, Store,
 };
-use codex_harness_translator::Translator;
+use codex_harness_translator::{CodexHarnessTranslator, TranslatorSettings};
 use flow::FlowId;
 use futures_util::StreamExt;
 use harness::{Event, FilePath, Flow, Observed, Response, Session, State};
@@ -25,6 +25,7 @@ use signal_codex_harness_nexus::{
     ByteOffset, Changed, Hook, IdentityFailure, Output, ParseFailure, ReportFailure,
     SessionStart_Data, Transition_Data,
 };
+use translator_serving::ValidTextBudget;
 
 const SESSION_META: &str =
     "{\"type\":\"session_meta\",\"payload\":{\"id\":\"01a1e4cb-c2d2-7d91-86ea-0b4c85ce34be\"}}\n";
@@ -39,7 +40,7 @@ const FLOW: &str = "4c85ce";
 
 struct Fixture {
     directory: tempfile::TempDir,
-    nexus: HarnessNexus<Translator>,
+    nexus: HarnessNexus<CodexHarnessTranslator>,
 }
 
 trait Fixtured: Sized {
@@ -51,6 +52,21 @@ trait Fixtured: Sized {
     fn append(&self, path: &Path, text: &str);
     fn read(&self, path: &Path) -> Vec<Changed>;
     fn record(&self) -> SessionRecord;
+}
+
+/// The translator's emissions, answered in this process.
+trait InProcess {
+    fn in_process() -> Self;
+}
+
+impl InProcess for CodexHarnessTranslator {
+    fn in_process() -> Self {
+        Self {
+            settings: RwLock::new(TranslatorSettings {
+                text_budget: ValidTextBudget::MAXIMUM,
+            }),
+        }
+    }
 }
 
 fn transition(event: Event, state: State) -> Changed {
@@ -72,7 +88,7 @@ impl Fixtured for Fixture {
         let nexus = HarnessNexus {
             store: Store::open(&directory.path().join("state").join("codex-harness.memory"))
                 .unwrap(),
-            translator: Translator,
+            translator: CodexHarnessTranslator::in_process(),
             serial: Mutex::new(()),
             observations: Mutex::new(None),
             configurations: Mutex::new(None),
@@ -86,7 +102,7 @@ impl Fixtured for Fixture {
         let nexus = HarnessNexus {
             store: Store::open(&directory.path().join("state").join("codex-harness.memory"))
                 .unwrap(),
-            translator: Translator,
+            translator: CodexHarnessTranslator::in_process(),
             serial: Mutex::new(()),
             observations: Mutex::new(None),
             configurations: Mutex::new(None),
@@ -186,6 +202,32 @@ fn a_configuration_value_is_checked_before_it_is_kept() {
             .configuration()
             .unwrap()
             .flows_root_option,
+        None
+    );
+}
+
+#[test]
+fn the_nexus_refuses_a_text_budget_as_its_translators_setting() {
+    use meta_signal_codex_harness_nexus::{
+        Answering, DepthLimit, NodeLimit, Output as MetaOutput, TextBudget,
+    };
+    let fixture = Fixture::fixture(PRODUCER);
+    assert_eq!(
+        fixture.nexus.configure(&Set::TextBudget(TextBudget {
+            node_limit: NodeLimit(1024),
+            depth_limit: DepthLimit(32),
+        })),
+        Err(MetaOutput::ConfigureRefused(
+            ConfigurationRefusal::TranslatorSetting
+        ))
+    );
+    assert_eq!(
+        fixture
+            .nexus
+            .store
+            .configuration()
+            .unwrap()
+            .text_budget_option,
         None
     );
 }

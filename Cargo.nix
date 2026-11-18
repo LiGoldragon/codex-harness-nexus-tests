@@ -108,6 +108,16 @@ rec {
           "zeroize" = [ "dep:zeroize" ];
         };
       };
+      "autocfg" = rec {
+        crateName = "autocfg";
+        version = "1.5.1";
+        edition = "2015";
+        sha256 = "0lqasy5i30flcgih1b50kvsk6z32g09r1q4ql7q81pj6228jy0zj";
+        authors = [
+          "Josh Stone <cuviper@gmail.com>"
+        ];
+
+      };
       "bitflags" = rec {
         crateName = "bitflags";
         version = "2.13.2";
@@ -303,6 +313,16 @@ rec {
           "rustc-dep-of-std" = [ "core" ];
         };
       };
+      "cfg_aliases" = rec {
+        crateName = "cfg_aliases";
+        version = "0.2.2";
+        edition = "2018";
+        sha256 = "09rm3dv28gbsal7w6q76lg2nfyn8wp789ska9b8vr1w750xfhygh";
+        authors = [
+          "Zicklag <zicklag@katharostech.com>"
+        ];
+
+      };
       "codex-harness-nexus" = rec {
         crateName = "codex-harness-nexus";
         version = "0.1.0";
@@ -310,11 +330,16 @@ rec {
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/LiGoldragon/codex-harness-nexus";
-          rev = "db16ba3682a1820a1365899edd42edb5a07aedbb";
-          sha256 = "08li674icmmk92apdmyqf8ylkf4b1i9la5irgbqk12s0qsjgz74k";
+          rev = "28436c24ed40e11eab40ae865c77ccd48cdf3e72";
+          sha256 = "18apww559mkm06gsnd68n3sdpam4a57p7zy2iyl2bjn9fj015d9l";
         };
         libName = "codex_harness_nexus";
         dependencies = [
+          {
+            name = "datom-codec";
+            packageId = "datom-codec";
+            optional = true;
+          }
           {
             name = "flow-ethos";
             packageId = "flow-ethos";
@@ -359,8 +384,18 @@ rec {
             usesDefaultFeatures = false;
           }
           {
+            name = "nexus-exchange";
+            packageId = "nexus-exchange";
+            usesDefaultFeatures = false;
+          }
+          {
             name = "notify";
             packageId = "notify";
+          }
+          {
+            name = "protos";
+            packageId = "protos";
+            optional = true;
           }
           {
             name = "rkyv";
@@ -384,11 +419,18 @@ rec {
             usesDefaultFeatures = false;
             features = [ "io-util" "macros" "net" "rt" "rt-multi-thread" "signal" "sync" "time" "tracing" ];
           }
+          {
+            name = "translator";
+            packageId = "translator";
+            rename = "shared-translator";
+            usesDefaultFeatures = false;
+            features = [ "unix" ];
+          }
         ];
         features = {
-          "datom" = [ "dep:datom-codec" "dep:protos" "harness/datom" "flow/datom" "signal/datom" "signal-codex-harness-nexus/datom" "meta-signal-codex-harness-nexus/datom" ];
+          "datom" = [ "dep:datom-codec" "dep:protos" "harness/datom" "flow/datom" "signal/datom" "signal-codex-harness-nexus/datom" "meta-signal-codex-harness-nexus/datom" "shared-translator/datom" "nexus-exchange/datom" ];
         };
-        resolvedDefaultFeatures = [ "default" ];
+        resolvedDefaultFeatures = [ "datom" "default" ];
       };
       "codex-harness-nexus-tests" = rec {
         crateName = "codex-harness-nexus-tests";
@@ -404,6 +446,7 @@ rec {
           {
             name = "codex-harness-translator";
             packageId = "codex-harness-translator";
+            features = [ "text" ];
           }
           {
             name = "flow-ethos";
@@ -427,6 +470,21 @@ rec {
             name = "meta-signal-codex-harness-nexus";
             packageId = "meta-signal-codex-harness-nexus";
             usesDefaultFeatures = false;
+            features = [ "datom" ];
+          }
+          {
+            name = "nexus-exchange";
+            packageId = "nexus-exchange";
+            usesDefaultFeatures = false;
+          }
+          {
+            name = "nix";
+            packageId = "nix";
+            features = [ "signal" ];
+          }
+          {
+            name = "notify";
+            packageId = "notify";
           }
           {
             name = "signal";
@@ -437,6 +495,7 @@ rec {
             name = "signal-codex-harness-nexus";
             packageId = "signal-codex-harness-nexus";
             usesDefaultFeatures = false;
+            features = [ "datom" ];
           }
           {
             name = "tempfile";
@@ -448,6 +507,19 @@ rec {
             usesDefaultFeatures = false;
             features = [ "io-util" "macros" "net" "rt" "rt-multi-thread" "signal" "sync" "time" "tracing" ];
           }
+          {
+            name = "translator";
+            packageId = "translator";
+            rename = "shared-translator";
+            usesDefaultFeatures = false;
+            features = [ "text" "unix" ];
+          }
+          {
+            name = "translator-serving";
+            packageId = "translator-serving";
+            usesDefaultFeatures = false;
+            features = [ "text" ];
+          }
         ];
 
       };
@@ -455,17 +527,23 @@ rec {
         crateName = "codex-harness-translator";
         version = "0.1.0";
         edition = "2024";
+        crateBin = [];
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/LiGoldragon/codex-harness-nexus";
-          rev = "db16ba3682a1820a1365899edd42edb5a07aedbb";
-          sha256 = "08li674icmmk92apdmyqf8ylkf4b1i9la5irgbqk12s0qsjgz74k";
+          rev = "28436c24ed40e11eab40ae865c77ccd48cdf3e72";
+          sha256 = "18apww559mkm06gsnd68n3sdpam4a57p7zy2iyl2bjn9fj015d9l";
         };
         libName = "codex_harness_translator";
         dependencies = [
           {
             name = "codex-harness-nexus";
             packageId = "codex-harness-nexus";
+          }
+          {
+            name = "datom-codec";
+            packageId = "datom-codec";
+            optional = true;
           }
           {
             name = "flow-ethos";
@@ -478,6 +556,16 @@ rec {
             packageId = "harness-nexus-library";
             rename = "harness";
             usesDefaultFeatures = false;
+          }
+          {
+            name = "meta-signal-codex-harness-nexus";
+            packageId = "meta-signal-codex-harness-nexus";
+            usesDefaultFeatures = false;
+          }
+          {
+            name = "protos";
+            packageId = "protos";
+            optional = true;
           }
           {
             name = "rkyv";
@@ -494,11 +582,29 @@ rec {
             packageId = "signal-codex-harness-nexus";
             usesDefaultFeatures = false;
           }
+          {
+            name = "translator";
+            packageId = "translator";
+            rename = "shared-translator";
+            usesDefaultFeatures = false;
+            features = [ "unix" ];
+          }
+          {
+            name = "translator-client";
+            packageId = "translator-client";
+            usesDefaultFeatures = false;
+          }
+          {
+            name = "translator-serving";
+            packageId = "translator-serving";
+            usesDefaultFeatures = false;
+          }
         ];
         features = {
           "datom" = [ "dep:datom-codec" "dep:protos" "codex-harness-nexus/datom" "harness/datom" "flow/datom" "signal-codex-harness-nexus/datom" ];
+          "text" = [ "datom" "meta-signal-codex-harness-nexus/datom" "shared-translator/text" "translator-serving/text" ];
         };
-        resolvedDefaultFeatures = [ "default" ];
+        resolvedDefaultFeatures = [ "datom" "default" "text" ];
       };
       "constant_time_eq" = rec {
         crateName = "constant_time_eq";
@@ -801,6 +907,16 @@ rec {
         libName = "flow_ethos";
         dependencies = [
           {
+            name = "datom-codec";
+            packageId = "datom-codec";
+            optional = true;
+          }
+          {
+            name = "protos";
+            packageId = "protos";
+            optional = true;
+          }
+          {
             name = "rkyv";
             packageId = "rkyv";
             usesDefaultFeatures = false;
@@ -816,6 +932,7 @@ rec {
         features = {
           "datom" = [ "dep:datom-codec" "dep:protos" ];
         };
+        resolvedDefaultFeatures = [ "datom" ];
       };
       "fsevent-sys" = rec {
         crateName = "fsevent-sys";
@@ -1107,10 +1224,20 @@ rec {
         libName = "harness";
         dependencies = [
           {
+            name = "datom-codec";
+            packageId = "datom-codec";
+            optional = true;
+          }
+          {
             name = "flow-ethos";
             packageId = "flow-ethos";
             rename = "flow";
             usesDefaultFeatures = false;
+          }
+          {
+            name = "protos";
+            packageId = "protos";
+            optional = true;
           }
           {
             name = "rkyv";
@@ -1122,6 +1249,7 @@ rec {
         features = {
           "datom" = [ "dep:datom-codec" "dep:protos" "flow/datom" ];
         };
+        resolvedDefaultFeatures = [ "datom" ];
       };
       "hashbrown" = rec {
         crateName = "hashbrown";
@@ -1312,7 +1440,7 @@ rec {
           "rustc-std-workspace-core" = [ "dep:rustc-std-workspace-core" ];
           "use_std" = [ "std" ];
         };
-        resolvedDefaultFeatures = [ "default" "std" ];
+        resolvedDefaultFeatures = [ "default" "extra_traits" "std" ];
       };
       "linux-raw-sys" = rec {
         crateName = "linux-raw-sys";
@@ -1328,7 +1456,7 @@ rec {
           "default" = [ "std" "general" "errno" ];
           "rustc-dep-of-std" = [ "core" "no_std" ];
         };
-        resolvedDefaultFeatures = [ "auxvec" "elf" "errno" "general" "ioctl" "no_std" ];
+        resolvedDefaultFeatures = [ "auxvec" "elf" "errno" "general" "ioctl" "no_std" "prctl" ];
       };
       "log" = rec {
         crateName = "log";
@@ -1372,6 +1500,24 @@ rec {
           "use_std" = [ "std" ];
         };
         resolvedDefaultFeatures = [ "alloc" "default" "std" ];
+      };
+      "memoffset" = rec {
+        crateName = "memoffset";
+        version = "0.9.1";
+        edition = "2015";
+        sha256 = "12i17wh9a9plx869g7j4whf62xw68k5zd4k0k5nh6ys5mszid028";
+        authors = [
+          "Gilad Naaman <gilad.naaman@gmail.com>"
+        ];
+        buildDependencies = [
+          {
+            name = "autocfg";
+            packageId = "autocfg";
+          }
+        ];
+        features = {
+        };
+        resolvedDefaultFeatures = [ "default" ];
       };
       "memory" = rec {
         crateName = "memory";
@@ -1441,21 +1587,31 @@ rec {
       };
       "meta-signal-codex-harness-nexus" = rec {
         crateName = "meta-signal-codex-harness-nexus";
-        version = "0.2.0";
+        version = "0.3.0";
         edition = "2024";
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/LiGoldragon/meta-signal-codex-harness-nexus";
-          rev = "8a504bc80b12d7f75860c276f64e06f387df3ba0";
-          sha256 = "19acqdrh99126z63x2w6b1z9pg9l6skg7mvv7w34s8msqlqi1g2j";
+          rev = "30e24bf549ab07d17bf413b7c952a3373bf1f781";
+          sha256 = "0ss2jfwr2z71v4cxwqvv9rmzdanc81q2bs1lfqdrcf0al9n4zdf9";
         };
         libName = "meta_signal_codex_harness_nexus";
         dependencies = [
+          {
+            name = "datom-codec";
+            packageId = "datom-codec";
+            optional = true;
+          }
           {
             name = "harness-nexus-library";
             packageId = "harness-nexus-library";
             rename = "harness";
             usesDefaultFeatures = false;
+          }
+          {
+            name = "protos";
+            packageId = "protos";
+            optional = true;
           }
           {
             name = "rkyv";
@@ -1472,6 +1628,7 @@ rec {
         features = {
           "datom" = [ "dep:datom-codec" "dep:protos" "harness/datom" "signal/datom" ];
         };
+        resolvedDefaultFeatures = [ "datom" ];
       };
       "mio" = rec {
         crateName = "mio";
@@ -1613,6 +1770,205 @@ rec {
         features = {
           "datom" = [ "dep:datom-codec" "dep:protos" ];
         };
+      };
+      "nexus-exchange" = rec {
+        crateName = "nexus-exchange";
+        version = "0.1.1";
+        edition = "2024";
+        workspace_member = null;
+        src = pkgs.fetchgit {
+          url = "https://github.com/LiGoldragon/nexus";
+          rev = "63a2d477ca194913c847d15f227637d84fbe9aeb";
+          sha256 = "09xh9bps4i0yzcwj3ly4skzwk40pi50xga66032fd2cz9lq66b9p";
+        };
+        libName = "nexus_exchange";
+        dependencies = [
+          {
+            name = "datom-codec";
+            packageId = "datom-codec";
+            optional = true;
+          }
+          {
+            name = "protos";
+            packageId = "protos";
+            optional = true;
+          }
+          {
+            name = "rkyv";
+            packageId = "rkyv";
+            usesDefaultFeatures = false;
+            features = [ "std" "bytecheck" "little_endian" "pointer_width_32" "unaligned" ];
+          }
+          {
+            name = "signal";
+            packageId = "signal";
+            usesDefaultFeatures = false;
+          }
+          {
+            name = "translator";
+            packageId = "translator";
+            rename = "shared-translator";
+            usesDefaultFeatures = false;
+            features = [ "unix" ];
+          }
+        ];
+        features = {
+          "datom" = [ "dep:datom-codec" "dep:protos" "signal/datom" "shared-translator/datom" ];
+        };
+        resolvedDefaultFeatures = [ "datom" "default" ];
+      };
+      "nexus-querying" = rec {
+        crateName = "nexus-querying";
+        version = "0.1.1";
+        edition = "2024";
+        workspace_member = null;
+        src = pkgs.fetchgit {
+          url = "https://github.com/LiGoldragon/nexus";
+          rev = "63a2d477ca194913c847d15f227637d84fbe9aeb";
+          sha256 = "09xh9bps4i0yzcwj3ly4skzwk40pi50xga66032fd2cz9lq66b9p";
+        };
+        libName = "nexus_querying";
+        dependencies = [
+          {
+            name = "nexus-exchange";
+            packageId = "nexus-exchange";
+          }
+          {
+            name = "rkyv";
+            packageId = "rkyv";
+            usesDefaultFeatures = false;
+            features = [ "std" "bytecheck" "little_endian" "pointer_width_32" "unaligned" ];
+          }
+          {
+            name = "signal";
+            packageId = "signal";
+            usesDefaultFeatures = false;
+          }
+        ];
+
+      };
+      "nexus-serving" = rec {
+        crateName = "nexus-serving";
+        version = "0.1.1";
+        edition = "2024";
+        workspace_member = null;
+        src = pkgs.fetchgit {
+          url = "https://github.com/LiGoldragon/nexus";
+          rev = "63a2d477ca194913c847d15f227637d84fbe9aeb";
+          sha256 = "09xh9bps4i0yzcwj3ly4skzwk40pi50xga66032fd2cz9lq66b9p";
+        };
+        libName = "nexus_serving";
+        dependencies = [
+          {
+            name = "futures-channel";
+            packageId = "futures-channel";
+            usesDefaultFeatures = false;
+            features = [ "sink" ];
+          }
+          {
+            name = "futures-util";
+            packageId = "futures-util";
+            usesDefaultFeatures = false;
+            features = [ "std" "async-await-macro" "channel" "io" "sink" ];
+          }
+          {
+            name = "mio";
+            packageId = "mio";
+            features = [ "log" ];
+          }
+          {
+            name = "nexus-exchange";
+            packageId = "nexus-exchange";
+          }
+          {
+            name = "rkyv";
+            packageId = "rkyv";
+            usesDefaultFeatures = false;
+            features = [ "std" "bytecheck" "little_endian" "pointer_width_32" "unaligned" ];
+          }
+          {
+            name = "signal";
+            packageId = "signal";
+            usesDefaultFeatures = false;
+          }
+          {
+            name = "tokio";
+            packageId = "tokio";
+            usesDefaultFeatures = false;
+            features = [ "rt" "net" "io-util" "time" "sync" "macros" "signal" "tracing" ];
+          }
+          {
+            name = "translator";
+            packageId = "translator";
+            rename = "shared-translator";
+            usesDefaultFeatures = false;
+            features = [ "unix" ];
+          }
+        ];
+        devDependencies = [
+          {
+            name = "tokio";
+            packageId = "tokio";
+            usesDefaultFeatures = false;
+            features = [ "rt-multi-thread" "net" "io-util" "time" "sync" "macros" ];
+          }
+        ];
+        features = {
+          "datom" = [ "dep:datom-codec" "dep:protos" "nexus-exchange/datom" ];
+        };
+      };
+      "nix" = rec {
+        crateName = "nix";
+        version = "0.30.1";
+        edition = "2021";
+        sha256 = "1dixahq9hk191g0c2ydc0h1ppxj0xw536y6rl63vlnp06lx3ylkl";
+        authors = [
+          "The nix-rust Project Developers"
+        ];
+        dependencies = [
+          {
+            name = "bitflags";
+            packageId = "bitflags";
+          }
+          {
+            name = "cfg-if";
+            packageId = "cfg-if";
+          }
+          {
+            name = "libc";
+            packageId = "libc";
+            features = [ "extra_traits" ];
+          }
+          {
+            name = "memoffset";
+            packageId = "memoffset";
+            optional = true;
+          }
+        ];
+        buildDependencies = [
+          {
+            name = "cfg_aliases";
+            packageId = "cfg_aliases";
+          }
+        ];
+        features = {
+          "aio" = [ "pin-utils" ];
+          "dir" = [ "fs" ];
+          "event" = [ "poll" ];
+          "memoffset" = [ "dep:memoffset" ];
+          "mount" = [ "uio" ];
+          "mqueue" = [ "fs" ];
+          "net" = [ "socket" ];
+          "pin-utils" = [ "dep:pin-utils" ];
+          "ptrace" = [ "process" ];
+          "sched" = [ "process" ];
+          "signal" = [ "process" ];
+          "socket" = [ "memoffset" ];
+          "ucontext" = [ "signal" ];
+          "user" = [ "feature" ];
+          "zerocopy" = [ "fs" "uio" ];
+        };
+        resolvedDefaultFeatures = [ "default" "feature" "fs" "memoffset" "poll" "process" "signal" "socket" "user" ];
       };
       "notify" = rec {
         crateName = "notify";
@@ -2236,7 +2592,7 @@ rec {
           "thread" = [ "linux-raw-sys/prctl" ];
           "use-libc" = [ "libc_errno" "libc" ];
         };
-        resolvedDefaultFeatures = [ "alloc" "default" "fs" "std" ];
+        resolvedDefaultFeatures = [ "alloc" "default" "fs" "process" "std" ];
       };
       "rustversion" = rec {
         crateName = "rustversion";
@@ -2434,9 +2790,19 @@ rec {
         };
         dependencies = [
           {
+            name = "datom-codec";
+            packageId = "datom-codec";
+            optional = true;
+          }
+          {
             name = "futures-core";
             packageId = "futures-core";
             usesDefaultFeatures = false;
+          }
+          {
+            name = "protos";
+            packageId = "protos";
+            optional = true;
           }
           {
             name = "rkyv";
@@ -2458,20 +2824,25 @@ rec {
         features = {
           "datom" = [ "dep:datom-codec" "dep:protos" ];
         };
-        resolvedDefaultFeatures = [ "default" ];
+        resolvedDefaultFeatures = [ "datom" "default" ];
       };
       "signal-codex-harness-nexus" = rec {
         crateName = "signal-codex-harness-nexus";
-        version = "0.2.0";
+        version = "0.2.1";
         edition = "2024";
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/LiGoldragon/signal-codex-harness-nexus";
-          rev = "8bd9dc670b8103adcabf447b70d3a4fc195df7a5";
-          sha256 = "1iasii07indcca8zhh302gkh1gpkw3ldqqmv4ibc250021n4hwna";
+          rev = "6a6fd1c53a2186689ee31e849203e7dd67f76c99";
+          sha256 = "0ig6fh7j0r2crvqc4vg2w7z4d71ilfb83yac6hl82fvbz0kqd115";
         };
         libName = "signal_codex_harness_nexus";
         dependencies = [
+          {
+            name = "datom-codec";
+            packageId = "datom-codec";
+            optional = true;
+          }
           {
             name = "flow-ethos";
             packageId = "flow-ethos";
@@ -2483,6 +2854,11 @@ rec {
             packageId = "harness-nexus-library";
             rename = "harness";
             usesDefaultFeatures = false;
+          }
+          {
+            name = "protos";
+            packageId = "protos";
+            optional = true;
           }
           {
             name = "rkyv";
@@ -2499,6 +2875,7 @@ rec {
         features = {
           "datom" = [ "dep:datom-codec" "dep:protos" "flow/datom" "harness/datom" "signal/datom" ];
         };
+        resolvedDefaultFeatures = [ "datom" ];
       };
       "signal-hook-registry" = rec {
         crateName = "signal-hook-registry";
@@ -3007,6 +3384,170 @@ rec {
           "valuable" = [ "dep:valuable" ];
         };
         resolvedDefaultFeatures = [ "once_cell" "std" ];
+      };
+      "translator" = rec {
+        crateName = "translator";
+        version = "0.5.2";
+        edition = "2021";
+        workspace_member = null;
+        src = pkgs.fetchgit {
+          url = "https://github.com/LiGoldragon/translator";
+          rev = "29601a3485bf8b726e7a2da7b3fa73a8a8bce58d";
+          sha256 = "1jsa473338b64cr1bsbwmk1zczs3vba66qxhf5yw4kgaai1ich7z";
+        };
+        dependencies = [
+          {
+            name = "datom-codec";
+            packageId = "datom-codec";
+            optional = true;
+          }
+          {
+            name = "libc";
+            packageId = "libc";
+            optional = true;
+          }
+          {
+            name = "nix";
+            packageId = "nix";
+            optional = true;
+            features = [ "poll" "socket" ];
+          }
+          {
+            name = "protos";
+            packageId = "protos";
+            optional = true;
+          }
+          {
+            name = "rkyv";
+            packageId = "rkyv";
+            usesDefaultFeatures = false;
+            features = [ "std" "bytecheck" "little_endian" "pointer_width_32" "unaligned" ];
+          }
+          {
+            name = "rustix";
+            packageId = "rustix";
+            target = { target, features }: (target."unix" or false);
+            features = [ "process" "fs" ];
+          }
+          {
+            name = "signal";
+            packageId = "signal";
+            usesDefaultFeatures = false;
+          }
+        ];
+        features = {
+          "datom" = [ "dep:datom-codec" "dep:protos" "signal/datom" ];
+          "text" = [ "datom" ];
+          "unix" = [ "dep:libc" "dep:nix" ];
+        };
+        resolvedDefaultFeatures = [ "datom" "text" "unix" ];
+      };
+      "translator-client" = rec {
+        crateName = "translator-client";
+        version = "0.1.1";
+        edition = "2024";
+        workspace_member = null;
+        src = pkgs.fetchgit {
+          url = "https://github.com/LiGoldragon/translator";
+          rev = "8e744a4503f13dd748e7e222f5f7aa5443b28961";
+          sha256 = "0nkkipr4nqs1w5sj8g8a3y1a7dqg562x7di1k7hh1h98spvq8c2g";
+        };
+        libName = "translator_client";
+        dependencies = [
+          {
+            name = "nexus-exchange";
+            packageId = "nexus-exchange";
+            usesDefaultFeatures = false;
+          }
+          {
+            name = "rkyv";
+            packageId = "rkyv";
+            usesDefaultFeatures = false;
+            features = [ "std" "bytecheck" "little_endian" "pointer_width_32" "unaligned" ];
+          }
+          {
+            name = "signal";
+            packageId = "signal";
+            usesDefaultFeatures = false;
+          }
+          {
+            name = "translator";
+            packageId = "translator";
+            rename = "shared-translator";
+            usesDefaultFeatures = false;
+            features = [ "unix" ];
+          }
+        ];
+        features = {
+          "datom" = [ "dep:datom-codec" "dep:protos" "nexus-exchange/datom" ];
+        };
+      };
+      "translator-serving" = rec {
+        crateName = "translator-serving";
+        version = "0.1.1";
+        edition = "2024";
+        workspace_member = null;
+        src = pkgs.fetchgit {
+          url = "https://github.com/LiGoldragon/translator";
+          rev = "8e744a4503f13dd748e7e222f5f7aa5443b28961";
+          sha256 = "0nkkipr4nqs1w5sj8g8a3y1a7dqg562x7di1k7hh1h98spvq8c2g";
+        };
+        libName = "translator_serving";
+        dependencies = [
+          {
+            name = "datom-codec";
+            packageId = "datom-codec";
+            optional = true;
+          }
+          {
+            name = "nexus-exchange";
+            packageId = "nexus-exchange";
+            usesDefaultFeatures = false;
+          }
+          {
+            name = "nexus-querying";
+            packageId = "nexus-querying";
+            usesDefaultFeatures = false;
+          }
+          {
+            name = "nexus-serving";
+            packageId = "nexus-serving";
+            usesDefaultFeatures = false;
+          }
+          {
+            name = "nix";
+            packageId = "nix";
+            features = [ "fs" "poll" "process" "signal" "socket" "user" ];
+          }
+          {
+            name = "protos";
+            packageId = "protos";
+            optional = true;
+          }
+          {
+            name = "rkyv";
+            packageId = "rkyv";
+            usesDefaultFeatures = false;
+            features = [ "std" "bytecheck" "little_endian" "pointer_width_32" "unaligned" ];
+          }
+          {
+            name = "signal";
+            packageId = "signal";
+            usesDefaultFeatures = false;
+          }
+          {
+            name = "translator";
+            packageId = "translator";
+            rename = "shared-translator";
+            usesDefaultFeatures = false;
+            features = [ "unix" ];
+          }
+        ];
+        features = {
+          "datom" = [ "dep:datom-codec" "dep:protos" "nexus-exchange/datom" "shared-translator/datom" ];
+          "text" = [ "datom" "shared-translator/text" ];
+        };
+        resolvedDefaultFeatures = [ "datom" "text" ];
       };
       "unicode-ident" = rec {
         crateName = "unicode-ident";

@@ -9,6 +9,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d3fb67a6e08acf24fdeccbac2cb6ac4305825bd1f117462e0e6f2f193345ad56"
 
 [[package]]
+name = "autocfg"
+version = "1.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f2032f911046de80f0a198e0901378627c33f59ea0ac00e363d481118bd70a53"
+
+[[package]]
 name = "bitflags"
 version = "2.13.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -79,10 +85,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9330f8b2ff13f34540b44e946ef35111825727b38d33286ef986142615121801"
 
 [[package]]
+name = "cfg_aliases"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f079e83a288787bcd14a6aea84cee5c87a67c5a3e660c30f557a3d24761b3527"
+
+[[package]]
 name = "codex-harness-nexus"
 version = "0.1.0"
-source = "git+https://github.com/LiGoldragon/codex-harness-nexus?rev=db16ba3682a1820a1365899edd42edb5a07aedbb#db16ba3682a1820a1365899edd42edb5a07aedbb"
+source = "git+https://github.com/LiGoldragon/codex-harness-nexus?rev=28436c24ed40e11eab40ae865c77ccd48cdf3e72#28436c24ed40e11eab40ae865c77ccd48cdf3e72"
 dependencies = [
+ "datom-codec",
  "flow-ethos",
  "futures-channel",
  "futures-util",
@@ -91,11 +104,14 @@ dependencies = [
  "meta-signal-codex-harness-nexus",
  "mio",
  "nexus",
+ "nexus-exchange",
  "notify",
+ "protos",
  "rkyv",
  "signal",
  "signal-codex-harness-nexus",
  "tokio",
+ "translator",
 ]
 
 [[package]]
@@ -108,23 +124,34 @@ dependencies = [
  "futures-util",
  "harness-nexus-library",
  "meta-signal-codex-harness-nexus",
+ "nexus-exchange",
+ "nix",
+ "notify",
  "signal",
  "signal-codex-harness-nexus",
  "tempfile",
  "tokio",
+ "translator",
+ "translator-serving",
 ]
 
 [[package]]
 name = "codex-harness-translator"
 version = "0.1.0"
-source = "git+https://github.com/LiGoldragon/codex-harness-nexus?rev=db16ba3682a1820a1365899edd42edb5a07aedbb#db16ba3682a1820a1365899edd42edb5a07aedbb"
+source = "git+https://github.com/LiGoldragon/codex-harness-nexus?rev=28436c24ed40e11eab40ae865c77ccd48cdf3e72#28436c24ed40e11eab40ae865c77ccd48cdf3e72"
 dependencies = [
  "codex-harness-nexus",
+ "datom-codec",
  "flow-ethos",
  "harness-nexus-library",
+ "meta-signal-codex-harness-nexus",
+ "protos",
  "rkyv",
  "serde_json",
  "signal-codex-harness-nexus",
+ "translator",
+ "translator-client",
+ "translator-serving",
 ]
 
 [[package]]
@@ -223,7 +250,9 @@ name = "flow-ethos"
 version = "0.54.3"
 source = "git+https://github.com/LiGoldragon/flow?rev=062ef9e1#062ef9e14abbf6552b257e9ce7e1c22f5bc00c27"
 dependencies = [
+ "datom-codec",
  "ethos-zero 22.0.0",
+ "protos",
  "rkyv",
 ]
 
@@ -314,7 +343,9 @@ name = "harness-nexus-library"
 version = "0.1.0"
 source = "git+https://github.com/LiGoldragon/harness-nexus-library?rev=3613d63d0994de7841bcf6f070c83bebb0ddfa5a#3613d63d0994de7841bcf6f070c83bebb0ddfa5a"
 dependencies = [
+ "datom-codec",
  "flow-ethos",
+ "protos",
  "rkyv",
 ]
 
@@ -416,6 +447,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf8baf1c55e62ffcace7a9f06f4bd9cd3f0c4beb022d3b367256b91b87513d98"
 
 [[package]]
+name = "memoffset"
+version = "0.9.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "488016bfae457b036d996092f6cb448677611ce4449e970ceaf42695203f218a"
+dependencies = [
+ "autocfg",
+]
+
+[[package]]
 name = "memory"
 version = "0.2.0"
 source = "git+https://github.com/LiGoldragon/memory.git?rev=e78519c2fc8f213246328bf28f9e38f9a216f76e#e78519c2fc8f213246328bf28f9e38f9a216f76e"
@@ -439,10 +479,12 @@ dependencies = [
 
 [[package]]
 name = "meta-signal-codex-harness-nexus"
-version = "0.2.0"
-source = "git+https://github.com/LiGoldragon/meta-signal-codex-harness-nexus?rev=8a504bc80b12d7f75860c276f64e06f387df3ba0#8a504bc80b12d7f75860c276f64e06f387df3ba0"
+version = "0.3.0"
+source = "git+https://github.com/LiGoldragon/meta-signal-codex-harness-nexus?rev=30e24bf549ab07d17bf413b7c952a3373bf1f781#30e24bf549ab07d17bf413b7c952a3373bf1f781"
 dependencies = [
+ "datom-codec",
  "harness-nexus-library",
+ "protos",
  "rkyv",
  "signal",
 ]
@@ -490,6 +532,56 @@ dependencies = [
  "signal",
  "thiserror",
  "tokio",
+]
+
+[[package]]
+name = "nexus-exchange"
+version = "0.1.1"
+source = "git+https://github.com/LiGoldragon/nexus?rev=63a2d477ca194913c847d15f227637d84fbe9aeb#63a2d477ca194913c847d15f227637d84fbe9aeb"
+dependencies = [
+ "datom-codec",
+ "protos",
+ "rkyv",
+ "signal",
+ "translator",
+]
+
+[[package]]
+name = "nexus-querying"
+version = "0.1.1"
+source = "git+https://github.com/LiGoldragon/nexus?rev=63a2d477ca194913c847d15f227637d84fbe9aeb#63a2d477ca194913c847d15f227637d84fbe9aeb"
+dependencies = [
+ "nexus-exchange",
+ "rkyv",
+ "signal",
+]
+
+[[package]]
+name = "nexus-serving"
+version = "0.1.1"
+source = "git+https://github.com/LiGoldragon/nexus?rev=63a2d477ca194913c847d15f227637d84fbe9aeb#63a2d477ca194913c847d15f227637d84fbe9aeb"
+dependencies = [
+ "futures-channel",
+ "futures-util",
+ "mio",
+ "nexus-exchange",
+ "rkyv",
+ "signal",
+ "tokio",
+ "translator",
+]
+
+[[package]]
+name = "nix"
+version = "0.30.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "74523f3a35e05aba87a1d978330aef40f67b0304ac79c1c00b294c9830543db6"
+dependencies = [
+ "bitflags",
+ "cfg-if",
+ "cfg_aliases",
+ "libc",
+ "memoffset",
 ]
 
 [[package]]
@@ -731,19 +823,23 @@ name = "signal"
 version = "11.2.0"
 source = "git+https://github.com/LiGoldragon/signal?rev=4f5cbb9#4f5cbb9322ecae7a8821439179e778d495d7804a"
 dependencies = [
+ "datom-codec",
  "ethos-zero 22.0.0",
  "futures-core",
+ "protos",
  "rkyv",
  "thiserror",
 ]
 
 [[package]]
 name = "signal-codex-harness-nexus"
-version = "0.2.0"
-source = "git+https://github.com/LiGoldragon/signal-codex-harness-nexus?rev=8bd9dc670b8103adcabf447b70d3a4fc195df7a5#8bd9dc670b8103adcabf447b70d3a4fc195df7a5"
+version = "0.2.1"
+source = "git+https://github.com/LiGoldragon/signal-codex-harness-nexus?rev=6a6fd1c53a2186689ee31e849203e7dd67f76c99#6a6fd1c53a2186689ee31e849203e7dd67f76c99"
 dependencies = [
+ "datom-codec",
  "flow-ethos",
  "harness-nexus-library",
+ "protos",
  "rkyv",
  "signal",
 ]
@@ -904,6 +1000,47 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "db97caf9d906fbde555dd62fa95ddba9eecfd14cb388e4f491a66d74cd5fb79a"
 dependencies = [
  "once_cell",
+]
+
+[[package]]
+name = "translator"
+version = "0.5.2"
+source = "git+https://github.com/LiGoldragon/translator?rev=29601a3#29601a3485bf8b726e7a2da7b3fa73a8a8bce58d"
+dependencies = [
+ "datom-codec",
+ "libc",
+ "nix",
+ "protos",
+ "rkyv",
+ "rustix",
+ "signal",
+]
+
+[[package]]
+name = "translator-client"
+version = "0.1.1"
+source = "git+https://github.com/LiGoldragon/translator?rev=8e744a4503f13dd748e7e222f5f7aa5443b28961#8e744a4503f13dd748e7e222f5f7aa5443b28961"
+dependencies = [
+ "nexus-exchange",
+ "rkyv",
+ "signal",
+ "translator",
+]
+
+[[package]]
+name = "translator-serving"
+version = "0.1.1"
+source = "git+https://github.com/LiGoldragon/translator?rev=8e744a4503f13dd748e7e222f5f7aa5443b28961#8e744a4503f13dd748e7e222f5f7aa5443b28961"
+dependencies = [
+ "datom-codec",
+ "nexus-exchange",
+ "nexus-querying",
+ "nexus-serving",
+ "nix",
+ "protos",
+ "rkyv",
+ "signal",
+ "translator",
 ]
 
 [[package]]

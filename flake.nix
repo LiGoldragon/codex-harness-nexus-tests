@@ -1,13 +1,31 @@
 {
   description = "Codex Harness Nexus behavioral tests.";
   inputs.base.url = "github:LiGoldragon/build-base";
-  outputs = { self, base }: base.lib.workspaceOutputs {
-    cargoNix = ./Cargo.nix;
-    extraChecks = { pkgs, toolchain, ... }: {
-      fmt = pkgs.runCommand "codex-harness-nexus-tests-fmt" { nativeBuildInputs = [ toolchain ]; } ''
-        rustfmt --edition 2024 --check ${./src}/lib.rs ${./tests}/transitions.rs ${./tests}/nexus.rs
-        touch "$out"
-      '';
-    };
+  # The Nexus whose pair the tests run, at the revision its crates are
+  # taken at through Cargo, built on this base.
+  inputs.codex-harness-nexus = {
+    url = "github:LiGoldragon/codex-harness-nexus/28436c24ed40e11eab40ae865c77ccd48cdf3e72";
+    inputs.base.follows = "base";
   };
+  outputs =
+    { self, base, codex-harness-nexus }:
+    base.lib.workspaceOutputs {
+      cargoNix = ./Cargo.nix;
+      # The pair tests start the packaged Nexus, named to them by its path.
+      memberChecks =
+        { pkgs, check, ... }:
+        {
+          codex-harness-nexus-tests = (check "codex-harness-nexus-tests" [ "default" ]).overrideAttrs {
+            CODEX_HARNESS_NEXUS = codex-harness-nexus.packages.${pkgs.stdenv.hostPlatform.system}.default;
+          };
+        };
+      extraChecks =
+        { pkgs, toolchain, ... }:
+        {
+          fmt = pkgs.runCommand "codex-harness-nexus-tests-fmt" { nativeBuildInputs = [ toolchain ]; } ''
+            rustfmt --edition 2024 --check ${./src}/lib.rs ${./tests}/transitions.rs ${./tests}/nexus.rs ${./tests}/pair.rs
+            touch "$out"
+          '';
+        };
+    };
 }
