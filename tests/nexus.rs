@@ -684,7 +684,11 @@ fn a_stale_startup_reading_cannot_commit_rows_a_second_time() {
     for operation in look {
         assert!(fixture.nexus.perform(operation).is_err());
     }
-    assert_eq!(fixture.record(), before, "a stale reading changes no Memory");
+    assert_eq!(
+        fixture.record(),
+        before,
+        "a stale reading changes no Memory"
+    );
 }
 
 #[test]
@@ -747,4 +751,77 @@ fn a_hook_path_that_exists_already_is_attached_and_read_at_once() {
     let record = fixture.record();
     assert!(matches!(record.rollout, Rollout::Watched(_)));
     assert_eq!(record.observed.state, State::Flowing(Flow::Working));
+}
+
+#[test]
+fn a_repeated_start_without_a_path_preserves_a_pending_hook_path() {
+    let fixture = Fixture::fixture(PRODUCER);
+    fixture.configure();
+    let rollout = fixture.path("sessions").join("not-yet-created.jsonl");
+    fixture.started(Some(&rollout)).unwrap();
+    fixture.started(None).unwrap();
+    assert_eq!(
+        fixture.record().rollout,
+        Rollout::Pending(FilePath(rollout.to_string_lossy().into_owned(),))
+    );
+}
+
+#[test]
+fn an_unused_thread_database_setting_is_not_required_for_readiness() {
+    use meta_signal_codex_harness_nexus::Answering;
+    let fixture = Fixture::fixture(PRODUCER);
+    for set in [
+        Set::FlowsRoot(FlowsRoot(fixture.text("flows"))),
+        Set::IdentityProducer(IdentityProducer(fixture.text("flow-id"))),
+        Set::SessionsDirectories(SessionsDirectories(vec![])),
+        Set::SubscriberCapacity(Capacity(16)),
+    ] {
+        fixture.nexus.configure(&set).unwrap();
+    }
+    assert!(
+        fixture
+            .nexus
+            .store
+            .configuration()
+            .unwrap()
+            .thread_databases_option
+            .is_none()
+    );
+    fixture.started(None).unwrap();
+}
+
+#[test]
+fn invalid_utf8_is_recorded_as_malformed_and_the_next_row_is_read() {
+    let fixture = Fixture::fixture(PRODUCER);
+    fixture.configure();
+    let rollout = fixture.path("sessions").join("rollout.jsonl");
+    fixture.started(Some(&rollout)).unwrap();
+    fixture.append(&rollout, "");
+    fixture.performed(Operation::Discovering(FilePath(
+        rollout.to_string_lossy().into_owned(),
+    )));
+    // The invalid byte is inside a JSON string: lossy decoding would
+    // otherwise make this a valid response, changing the session state.
+    OpenOptions::new().append(true).open(&rollout).unwrap().write_all(
+        b"{\"type\":\"event_msg\",\"payload\":{\"type\":\"task_complete\",\"last_agent_message\":\"\xff\"}}\n"
+    ).unwrap();
+    fixture.append(&rollout, TASK_STARTED);
+    let changes = fixture.read(&rollout);
+    assert!(matches!(
+        &changes[..],
+        [Changed::Malformed(_), Changed::Transition(_)]
+    ));
+    assert_eq!(
+        fixture.record().observed.state,
+        State::Flowing(Flow::Working)
+    );
+}
+
+#[test]
+fn a_payload_in_another_outer_row_kind_is_not_an_event() {
+    use codex_harness_translator::{Interpretable, Row, RowText};
+    assert_eq!(
+        RowText("{\"type\":\"other\",\"payload\":{\"type\":\"task_started\"}}".into()).row(),
+        Ok(Row::Other)
+    );
 }
