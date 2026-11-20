@@ -6,11 +6,11 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1795015588,
-        "narHash": "sha256-hhP824FYRmz/IFZXSKX9JzvTrEqtZoX6iaXpKT9srjM=",
+        "lastModified": 1795213524,
+        "narHash": "sha256-d7nDfUzW0ZYbeRC65yYeeLo8RVa8V34M5TiRl79kna0=",
         "owner": "LiGoldragon",
         "repo": "build-base",
-        "rev": "b175b98db04d616b714044b68ecc9374cead178f",
+        "rev": "74e842e684d9ffe9442d560eaaa4f71f9fb06dac",
         "type": "github"
       },
       "original": {
@@ -46,17 +46,16 @@
         "ethos": "ethos"
       },
       "locked": {
-        "lastModified": 1795015387,
-        "narHash": "sha256-GdmH/XwFs29dVCQQHx70x+KByzpeaU+RXttu8HDTn94=",
+        "lastModified": 1795213410,
+        "narHash": "sha256-aHS0DU51iQh8Ku4zxR1yVXEYaO5VvmIL8wEogKntzF0=",
         "owner": "LiGoldragon",
         "repo": "codex-harness-nexus",
-        "rev": "d312b2ffec496855edbb095af63923393b03d212",
+        "rev": "2840443ae34c38c6eff1fc3b4d7e0722a741846d",
         "type": "github"
       },
       "original": {
         "owner": "LiGoldragon",
         "repo": "codex-harness-nexus",
-        "rev": "d312b2ffec496855edbb095af63923393b03d212",
         "type": "github"
       }
     },

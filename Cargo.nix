@@ -330,8 +330,8 @@ rec {
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/LiGoldragon/codex-harness-nexus";
-          rev = "d312b2ffec496855edbb095af63923393b03d212";
-          sha256 = "1plzsdqg0vnvbs8lysay7b5q3qn7yhg1y414aifnzcq5gkyqgn8r";
+          rev = "2840443ae34c38c6eff1fc3b4d7e0722a741846d";
+          sha256 = "0pfcxnlq0a01yc5n5gjmxrl1hwamf8fwaczf59y0i2bm9q6v8x38";
         };
         libName = "codex_harness_nexus";
         dependencies = [
@@ -428,7 +428,7 @@ rec {
           }
         ];
         features = {
-          "datom" = [ "dep:datom-codec" "dep:protos" "harness/datom" "flow/datom" "signal/datom" "signal-codex-harness-nexus/datom" "meta-signal-codex-harness-nexus/datom" "shared-translator/datom" "nexus-exchange/datom" ];
+          "datom" = [ "nexus/datom" "dep:datom-codec" "dep:protos" "harness/datom" "flow/datom" "signal/datom" "signal-codex-harness-nexus/datom" "meta-signal-codex-harness-nexus/datom" "shared-translator/datom" "nexus-exchange/datom" ];
         };
         resolvedDefaultFeatures = [ "datom" "default" ];
       };
@@ -537,8 +537,8 @@ rec {
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/LiGoldragon/codex-harness-nexus";
-          rev = "d312b2ffec496855edbb095af63923393b03d212";
-          sha256 = "1plzsdqg0vnvbs8lysay7b5q3qn7yhg1y414aifnzcq5gkyqgn8r";
+          rev = "2840443ae34c38c6eff1fc3b4d7e0722a741846d";
+          sha256 = "0pfcxnlq0a01yc5n5gjmxrl1hwamf8fwaczf59y0i2bm9q6v8x38";
         };
         libName = "codex_harness_translator";
         dependencies = [
@@ -1734,14 +1734,24 @@ rec {
         workspace_member = null;
         src = pkgs.fetchgit {
           url = "https://github.com/LiGoldragon/nexus";
-          rev = "d020a62d9258c9d8682faedf77252d8778ed0857";
-          sha256 = "1lvnjlpaky1mgwngq4idkcd4mra4j7a5kvnaraz8v57fs9zskj4d";
+          rev = "24804e89416fd64644355527ee219d7a40d3462e";
+          sha256 = "06bzqq7ms4w70viidl1mw5jgc761npm1y76sy4lgwwy9dx9gh1f6";
         };
         dependencies = [
+          {
+            name = "datom-codec";
+            packageId = "datom-codec";
+            optional = true;
+          }
           {
             name = "futures-util";
             packageId = "futures-util";
             usesDefaultFeatures = false;
+          }
+          {
+            name = "protos";
+            packageId = "protos";
+            optional = true;
           }
           {
             name = "rkyv";
@@ -1752,6 +1762,7 @@ rec {
           {
             name = "signal";
             packageId = "signal";
+            usesDefaultFeatures = false;
           }
           {
             name = "thiserror";
@@ -1761,7 +1772,7 @@ rec {
             name = "tokio";
             packageId = "tokio";
             usesDefaultFeatures = false;
-            features = [ "sync" ];
+            features = [ "sync" "net" "io-util" ];
           }
         ];
         buildDependencies = [
@@ -1781,6 +1792,7 @@ rec {
         features = {
           "datom" = [ "dep:datom-codec" "dep:protos" ];
         };
+        resolvedDefaultFeatures = [ "datom" ];
       };
       "nexus-exchange" = rec {
         crateName = "nexus-exchange";
@@ -2835,7 +2847,7 @@ rec {
         features = {
           "datom" = [ "dep:datom-codec" "dep:protos" ];
         };
-        resolvedDefaultFeatures = [ "datom" "default" ];
+        resolvedDefaultFeatures = [ "datom" ];
       };
       "signal-codex-harness-nexus" = rec {
         crateName = "signal-codex-harness-nexus";
