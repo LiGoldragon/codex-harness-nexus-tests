@@ -93,7 +93,7 @@ checksum = "f079e83a288787bcd14a6aea84cee5c87a67c5a3e660c30f557a3d24761b3527"
 [[package]]
 name = "codex-harness-nexus"
 version = "0.1.0"
-source = "git+https://github.com/LiGoldragon/codex-harness-nexus?rev=2840443ae34c38c6eff1fc3b4d7e0722a741846d#2840443ae34c38c6eff1fc3b4d7e0722a741846d"
+source = "git+https://github.com/LiGoldragon/codex-harness-nexus?rev=e5201e0d3f316977486138127fd305712c1e1266#e5201e0d3f316977486138127fd305712c1e1266"
 dependencies = [
  "datom-codec",
  "flow-ethos",
@@ -139,7 +139,7 @@ dependencies = [
 [[package]]
 name = "codex-harness-translator"
 version = "0.1.0"
-source = "git+https://github.com/LiGoldragon/codex-harness-nexus?rev=2840443ae34c38c6eff1fc3b4d7e0722a741846d#2840443ae34c38c6eff1fc3b4d7e0722a741846d"
+source = "git+https://github.com/LiGoldragon/codex-harness-nexus?rev=e5201e0d3f316977486138127fd305712c1e1266#e5201e0d3f316977486138127fd305712c1e1266"
 dependencies = [
  "codex-harness-nexus",
  "datom-codec",
@@ -526,7 +526,7 @@ dependencies = [
 [[package]]
 name = "nexus"
 version = "0.9.0"
-source = "git+https://github.com/LiGoldragon/nexus?rev=24804e89416fd64644355527ee219d7a40d3462e#24804e89416fd64644355527ee219d7a40d3462e"
+source = "git+https://github.com/LiGoldragon/nexus?rev=ea4db5a51083f114c624fc23c023c7a255376846#ea4db5a51083f114c624fc23c023c7a255376846"
 dependencies = [
  "datom-codec",
  "ethos-zero 30.0.0",
