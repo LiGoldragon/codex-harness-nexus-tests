@@ -10,8 +10,8 @@ publish = false
 [dependencies]
 harness = { package = "harness-nexus-library", git = "https://github.com/LiGoldragon/harness-nexus-library", rev = "3613d63d0994de7841bcf6f070c83bebb0ddfa5a", default-features = false }
 flow = { package = "flow-ethos", git = "https://github.com/LiGoldragon/flow", rev = "062ef9e1", default-features = false }
-codex-harness-nexus = { git = "https://github.com/LiGoldragon/codex-harness-nexus", rev = "e5201e0d3f316977486138127fd305712c1e1266" }
-codex-harness-translator = { git = "https://github.com/LiGoldragon/codex-harness-nexus", rev = "e5201e0d3f316977486138127fd305712c1e1266", features = ["text"] }
+codex-harness-nexus = { git = "https://github.com/LiGoldragon/codex-harness-nexus", rev = "4a4e26465e0fcbe68ba772fa56eacc71afa379e6" }
+codex-harness-translator = { git = "https://github.com/LiGoldragon/codex-harness-nexus", rev = "4a4e26465e0fcbe68ba772fa56eacc71afa379e6", features = ["text"] }
 signal = { git = "https://github.com/LiGoldragon/signal", rev = "4f5cbb9", default-features = false }
 signal-codex-harness-nexus = { git = "https://github.com/LiGoldragon/signal-codex-harness-nexus", rev = "68dafec69a6f733cbee74a7a990b9aeffd0c4873", default-features = false, features = ["datom"] }
 meta-signal-codex-harness-nexus = { git = "https://github.com/LiGoldragon/meta-signal-codex-harness-nexus", rev = "b6039b70491a2b4b778af4b094c3b5782da2964e", default-features = false, features = ["datom"] }
